@@ -7,5 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.1.0](https://github.com/sosly/foundryvtt-4e-house-rules/releases/tag/v0.1.0)
 ### Added
-- Added Vector Storage for storing and manipulating document vectors.
 - Initialized the AIde project.
+- Added Vector Storage for storing and manipulating document vectors.
+- Added an AI Client wrapper for interacting with remote AI services.
