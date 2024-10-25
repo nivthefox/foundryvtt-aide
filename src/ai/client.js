@@ -1,4 +1,5 @@
 import {Anthropic} from './vendor/anthropic.js';
+import {DeepInfra} from './vendor/deepinfra.js';
 import {OpenAI} from './vendor/openai';
 
 /**
@@ -111,6 +112,8 @@ export class Client {
         switch (vendor.toLowerCase()) {
             case 'anthropic':
                 return new Anthropic(configuration);
+            case 'deepinfra':
+                return new DeepInfra(configuration);
             case 'openai':
                 return new OpenAI(configuration);
             default:

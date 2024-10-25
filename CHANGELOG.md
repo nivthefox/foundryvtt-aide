@@ -11,4 +11,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Vector Storage for storing and manipulating document vectors.
 - Added an AI Client wrapper for interacting with remote AI services.
 - Added support for Anthropic
-- Added support for OpenAI 
+- Added support for OpenAI
+- Added support for DeepInfra
