@@ -1,4 +1,5 @@
-import {Anthropic} from "./vendor/anthropic.js";
+import {Anthropic} from './vendor/anthropic.js';
+import {OpenAI} from './vendor/openai';
 
 /**
  * Client provides AI capabilities including text embedding and chat generation.
@@ -110,6 +111,8 @@ export class Client {
         switch (vendor.toLowerCase()) {
             case 'anthropic':
                 return new Anthropic(configuration);
+            case 'openai':
+                return new OpenAI(configuration);
             default:
                 throw new Error(`Unsupported vendor: ${vendor}`);
         }
