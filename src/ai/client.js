@@ -1,3 +1,5 @@
+import {Anthropic} from "./vendor/anthropic.js";
+
 /**
  * Client provides AI capabilities including text embedding and chat generation.
  *
@@ -106,6 +108,8 @@ export class Client {
 
     static #createImplementation(vendor, configuration) {
         switch (vendor.toLowerCase()) {
+            case 'anthropic':
+                return new Anthropic(configuration);
             default:
                 throw new Error(`Unsupported vendor: ${vendor}`);
         }
