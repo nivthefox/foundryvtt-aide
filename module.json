@@ -27,11 +27,11 @@
         "path": "lang/en.json"
       }
     ],
-    "url":		"https://github.com/sosly/foundryvtt-aide",
-    "license":	"https://github.com/sosly/foundryvtt-aide/LICENSE",
-    "manifest":	"https://github.com/sosly/foundryvtt-aide/bundle/module.json",
-    "download":	"https://github.com/sosly/foundryvtt-aide/bundle/foundryvtt-aide.zip",
-    "readme":	    "https://github.com/sosly/foundryvtt-aide/README.md",
-    "changelog":  "https://github.com/sosly/foundryvtt-aide/CHANGELOG.md"
+    "url":		"https://github.com/nivthefox/foundryvtt-aide",
+    "license":	"https://github.com/nivthefox/foundryvtt-aide/LICENSE",
+    "manifest":	"https://github.com/nivthefox/foundryvtt-aide/bundle/module.json",
+    "download":	"https://github.com/nivthefox/foundryvtt-aide/bundle/foundryvtt-aide.zip",
+    "readme":	    "https://github.com/nivthefox/foundryvtt-aide/README.md",
+    "changelog":  "https://github.com/nivthefox/foundryvtt-aide/CHANGELOG.md"
   }
   
