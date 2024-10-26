@@ -17,7 +17,6 @@ AIde brings powerful AI capabilities to your Foundry VTT environment, enabling s
 
 ### Multi-Vendor AI Integration
 - Support for leading AI providers:
-  - Anthropic (Claude)
   - OpenAI (GPT-4, GPT-3.5)
   - DeepInfra (various open models)
 - Unified interface for embeddings and chat generation

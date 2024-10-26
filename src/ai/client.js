@@ -1,4 +1,4 @@
-import {Anthropic} from './provider/anthropic.js';
+// import {Anthropic} from './provider/anthropic.js';
 import {DeepInfra} from './provider/deepinfra.js';
 import {OpenAI} from './provider/openai';
 
@@ -119,7 +119,12 @@ export class Client {
     static #createImplementation(provider, configuration) {
         switch (provider.toLowerCase()) {
             case 'anthropic':
-                return new Anthropic(configuration);
+                throw new Error('Unsupported provider: Anthropic');
+                // disabled temporarily as Anthropic does not support embeddings
+                // todo: re-enable when Anthropic supports embeddings or when we
+                //       have the ability to separate the chat and embedding
+                //       providers
+                // return new Anthropic(configuration);
             case 'deepinfra':
                 return new DeepInfra(configuration);
             case 'openai':
