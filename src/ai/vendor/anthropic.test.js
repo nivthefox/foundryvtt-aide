@@ -1,4 +1,4 @@
-import { Suite } from '../../app/Quench';
+import { Suite } from '../../app/quench';
 import { Anthropic } from './anthropic';
 
 Suite('ai.vendor.anthropic', AnthropicVendorTest);

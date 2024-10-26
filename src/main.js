@@ -1,4 +1,4 @@
-import {App} from './app/App.js';
+import {App} from './app/app.js';
 import {id, title, version} from '../module.json';
 
 Hooks.once('init', () => {

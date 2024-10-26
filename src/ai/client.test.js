@@ -1,4 +1,4 @@
-import { Suite } from '../app/Quench';
+import { Suite } from '../app/quench';
 import { Client } from './client';
 import { MockVendor } from '././vendor/mock_vendor';
 

@@ -1,4 +1,4 @@
-import { Suite } from '../app/Quench';
+import { Suite } from '../app/quench';
 import { VectorStore } from './vector_store';
 
 Suite('document.vector_store', VectorStoreTest);
