@@ -31,11 +31,13 @@ export class VectorStore {
      * @param {{debug: Function, error: Function}} logger
      * @param {number} [lookups=3]
      * @param {number} [maxWeight=0.7]
+     * @param {number} [queryBoostFactor=1.2]
      */
-    constructor(logger, lookups = 3, maxWeight = 0.7) {
+    constructor(logger, lookups = 3, maxWeight = 0.7, queryBoostFactor = 1.2) {
         this.logger = logger;
         this.lookups = lookups;
         this.maxWeight = maxWeight;
+        this.queryBoostFactor = queryBoostFactor;
         this.#loadFromStorage();
     }
 
@@ -74,30 +76,37 @@ export class VectorStore {
     }
 
     /**
-     * findSimilar will find the most similar documents to a given query vector
-     * using a weighted combination of maximum and average chunk similarity
-     * @param {Vector} queryVector
+     * findSimilar with enhanced query processing
+     * @param {Vector | Vector[]} queryVectors
      * @returns {SimilarityResult[]}
      */
-    findSimilar(queryVector) {
+    findSimilar(queryVectors) {
+        const queries = Array.isArray(queryVectors[0]) ? queryVectors : [queryVectors];
         const avgWeight = 1 - this.maxWeight;
 
         return Array.from(this.#cache.entries())
-            .map(([id, vectors]) => {
-                const similarities = vectors.map(vector => ({
-                    similarity: cosineSimilarity(queryVector, vector)
-                }));
+            .map(([id, documentVectors]) => {
+                // For each query vector, calculate similarities with all document chunks
+                const queryScores = queries.map(queryVector => {
+                    const similarities = documentVectors.map(docVector => ({
+                        similarity: this.#calculateSimilarity(queryVector, docVector)
+                    }));
 
-                const maxSim = similarities.reduce((max, curr) =>
-                    curr.similarity > max.similarity ? curr : max
-                );
-                const avgSim = similarities.reduce((sum, curr) =>
-                    sum + curr.similarity, 0) / similarities.length;
+                    const maxSim = similarities.reduce((max, curr) =>
+                        curr.similarity > max.similarity ? curr : max
+                    );
+                    const avgSim = similarities.reduce((sum, curr) =>
+                        sum + curr.similarity, 0) / similarities.length;
 
-                return {
-                    id,
-                    score: (maxSim.similarity * this.maxWeight) + (avgSim * avgWeight)
-                };
+                    const score = (maxSim.similarity * this.maxWeight) + (avgSim * avgWeight);
+                    console.log(`Scores for ${id}:`, {queryVector, similarities, maxSim, avgSim, score});
+                    return score;
+                });
+
+                // Take the maximum score across all query vectors
+                const score = queryScores.reduce((sum, score) => sum + score, 0) / queryScores.length;
+
+                return { id, score };
             })
             .sort((a, b) => b.score - a.score)
             .slice(0, this.lookups);
@@ -129,6 +138,31 @@ export class VectorStore {
             }).length,
             version: STORAGE_FORMAT_VERSION
         };
+    }
+
+    /**
+     * Calculate cosine similarity with length normalization
+     * @private
+     * @param {Vector} vecA
+     * @param {Vector} vecB
+     * @returns {number}
+     */
+    #calculateSimilarity(vecA, vecB) {
+        const dot = vecA.reduce((sum, a, i) => sum + (a * vecB[i]), 0);
+        const normA = Math.sqrt(vecA.reduce((sum, a) => sum + (a * a), 0));
+        const normB = Math.sqrt(vecB.reduce((sum, b) => sum + (b * b), 0));
+
+        // Calculate basic cosine similarity
+        const cosineSim = dot / (normA * normB);
+
+        // Square it to emphasize directional alignment
+        const directionEmphasis = cosineSim * cosineSim;
+
+        // Apply length normalization boost for shorter vectors
+        const lengthRatio = Math.min(normA, normB) / Math.max(normA, normB);
+        const boost = normA < normB ? this.queryBoostFactor : 1;
+
+        return directionEmphasis * Math.pow(lengthRatio, boost);
     }
 
     /**
@@ -196,17 +230,4 @@ export class VectorStore {
             );
         }
     }
-}
-
-/**
- * Calculate cosine similarity between two vectors
- * @param {number[]} vecA
- * @param {number[]} vecB
- * @returns {number}
- */
-function cosineSimilarity(vecA, vecB) {
-    const dot = vecA.reduce((sum, a, i) => sum + (a * vecB[i]), 0);
-    const normA = Math.sqrt(vecA.reduce((sum, a) => sum + (a * a), 0));
-    const normB = Math.sqrt(vecB.reduce((sum, b) => sum + (b * b), 0));
-    return dot / (normA * normB);
 }

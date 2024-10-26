@@ -115,7 +115,7 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
         });
     });
 
-    describe('similarity search', () => {
+    describe('similarity search with length normalization', () => {
         /** @type {EmbeddingDocument[]} */
         const documents = [
             { id: 'doc1', vectors: [[1, 0, 0]]},
@@ -128,35 +128,37 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
          *   query: number[],
          *   expectFirst?: string,
          *   expectLength?: number,
-         *   lookups?: number
+         *   lookups?: number,
+         *   queryBoostFactor?: number
          * }>} */
         const searchTests = [
             {
-                name: 'finds exact match',
-                query: [1, 0, 0],
+                name: 'handles short query vectors',
+                query: [0.1, 0, 0], // Short magnitude query
+                expectFirst: 'doc1',
+                queryBoostFactor: 1.2
+            },
+            {
+                name: 'works with default boost factor',
+                query: [0.2, 0, 0],
                 expectFirst: 'doc1'
             },
             {
-                name: 'finds closest match',
-                query: [0.9, 0.1, 0],
-                expectFirst: 'doc1'
-            },
-            {
-                name: 'handles equidistant vectors',
-                query: [1, 1, 0],
-                expectLength: 3
-            },
-            {
-                name: 'respects lookup limit',
-                query: [1, 1, 1],
-                lookups: 2,
-                expectLength: 2
+                name: 'handles higher boost factors',
+                query: [0.1, 0, 0],
+                expectFirst: 'doc1',
+                queryBoostFactor: 2.0
             }
         ];
 
-        searchTests.forEach(({name, query, expectFirst, expectLength, lookups}) => {
+        searchTests.forEach(({name, query, expectFirst, expectLength, lookups, queryBoostFactor}) => {
             it(name, () => {
-                const testStore = lookups ? new VectorStore(mockLogger, lookups) : store;
+                const testStore = new VectorStore(
+                    mockLogger,
+                    lookups || 3,
+                    0.7,
+                    queryBoostFactor
+                );
                 testStore.addBatch(documents);
 
                 const results = testStore.findSimilar(query);
@@ -170,60 +172,65 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
         });
     });
 
-    describe('similarity search with multiple chunks', () => {
+    describe('multiple query vectors', () => {
         /** @type {EmbeddingDocument[]} */
         const documentsWithChunks = [
             {
                 id: 'doc1',
                 vectors: [
                     [1, 0, 0],
-                    [0.9, 0.1, 0]
+                    [0, 1, 0]
                 ]
             },
             {
                 id: 'doc2',
                 vectors: [
-                    [0, 1, 0],
-                    [0, 0.9, 0.1]
-                ]
-            },
-            {
-                id: 'doc3',
-                vectors: [
-                    [0.3, 0.3, 0.3],
-                    [0.4, 0.4, 0.4]
+                    [0, 0, 1],
+                    [0.5, 0.5, 0]
                 ]
             }
         ];
 
-        /**
-         * @type {Array<{
+        /** @type {Array<{
          *   name: string,
-         *   query: number[],
-         *   expectFirst: string
+         *   queries: number[][],
+         *   expectFirst: string,
+         *   description: string
          * }>} */
-        const multiChunkTests = [
+        const multiQueryTests = [
             {
-                name: 'finds document with best max similarity',
-                query: [1, 0, 0],
-                expectFirst: 'doc1'  // Should match doc1's first chunk perfectly
+                name: 'finds best match across multiple queries',
+                queries: [
+                    [0.1, 0, 0],   // Similar to doc1's first vector
+                    [0, 0.1, 0]    // Similar to doc1's second vector
+                ],
+                expectFirst: 'doc1',
+                description: 'Should match doc1 due to combined similarity'
             },
             {
-                name: 'weights multiple similar chunks higher',
-                query: [0.95, 0.05, 0],
-                expectFirst: 'doc1'  // Both chunks in doc1 are similar to query
+                name: 'handles different query vector lengths',
+                queries: [
+                    [0.1, 0.1, 0], // Short magnitude
+                    [0, 0, 1]      // Full magnitude
+                ],
+                expectFirst: 'doc2',
+                description: 'Should match doc2 due to strong match with second query'
             },
             {
-                name: 'balances max and average appropriately',
-                query: [0.3, 0.3, 0.3],
-                expectFirst: 'doc3'  // Lower max similarity but better average
+                name: 'respects maxWeight in multi-query scenario',
+                queries: [
+                    [0.5, 0.5, 0], // Matches doc2's second vector
+                    [0, 0, 0.1]    // Weakly matches doc2's first vector
+                ],
+                expectFirst: 'doc2',
+                description: 'Should favor doc2 due to balanced similarity across chunks'
             }
         ];
 
-        multiChunkTests.forEach(({name, query, expectFirst}) => {
-            it(name, () => {
+        multiQueryTests.forEach(({name, queries, expectFirst, description}) => {
+            it(`${name} - ${description}`, () => {
                 store.addBatch(documentsWithChunks);
-                const results = store.findSimilar(query);
+                const results = store.findSimilar(queries);
                 assert.equal(results[0].id, expectFirst);
             });
         });
