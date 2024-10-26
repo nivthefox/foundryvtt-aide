@@ -20,21 +20,38 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
     });
 
     describe('validation cases', () => {
+        /**
+         * @type {Array<{
+         *   name: string,
+         *   input: EmbeddingDocument,
+         *   errorContains: string,
+         *   setup?: () => void
+         * }>}
+         */
         const testCases = [
             {
                 name: 'rejects string vectors',
-                input: [['a', 'b', 'c']],
+                input: {
+                    id: 'test',
+                    vectors: [['a', 'b', 'c']],
+                },
                 errorContains: 'must be an array of numbers'
             },
             {
                 name: 'rejects mixed type vectors',
-                input: [[1, '2', 3]],
+                input: {
+                    id: 'test',
+                    vectors: [[1, '2', 3]],
+                },
                 errorContains: 'must be an array of numbers'
             },
             {
                 name: 'rejects mismatched dimensions',
-                setup: () => store.add('first', [[1, 2, 3]]),
-                input: [[1, 2]],
+                setup: () => store.add({id: 'first', vectors: [[1, 2, 3]]}),
+                input: {
+                    id: 'test',
+                    vectors: [[1, 2]],
+                },
                 errorContains: 'dimension mismatch'
             }
         ];
@@ -42,30 +59,44 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
         testCases.forEach(({name, input, errorContains, setup}) => {
             it(name, () => {
                 if (setup) setup();
-                assert.throws(() => store.add('test', input), errorContains);
+                assert.throws(() => store.add(input), errorContains);
             });
         });
     });
 
     describe('persistence', () => {
+        /** @type {Array<{
+         *   name: string,
+         *   operation: (store: VectorStore) => void,
+         *   expectSize: number
+         * }>} */
         const persistenceTests = [
             {
                 name: 'saves single document with chunks to localStorage',
-                operation: store => store.add('doc1', [[1, 2, 3]], 'original'),
+                operation: store => store.add({id: 'doc1', vectors: [[1, 2, 3]]}),
                 expectSize: 1
             },
             {
                 name: 'saves batch to localStorage',
                 operation: store => store.addBatch([
-                    { documentID: 'doc1', chunks: [[1, 2, 3]] },
-                    { documentID: 'doc2', chunks: [[4, 5, 6], [7, 8, 9]] },
+                    {
+                        id: 'doc1',
+                        vectors: [[1, 2, 3]]
+                    },
+                    {
+                        id: 'doc2',
+                        vectors: [
+                            [4, 5, 6],
+                            [7, 8, 9]
+                        ]
+                    }
                 ]),
                 expectSize: 2
             },
             {
                 name: 'clears storage',
                 operation: store => {
-                    store.add('doc1', [[1, 2, 3]]);
+                    store.add({id: 'doc1', vectors: [[1, 2, 3]]});
                     store.clear();
                 },
                 expectSize: 0
@@ -85,18 +116,25 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
     });
 
     describe('similarity search', () => {
+        /** @type {EmbeddingDocument[]} */
         const documents = [
-            { documentID: 'doc1', chunks: [[1, 0, 0]] },
-            { documentID: 'doc2', chunks: [[0, 1, 0]] },
-            { documentID: 'doc3', chunks: [[0, 0, 1]] },
+            { id: 'doc1', vectors: [[1, 0, 0]]},
+            { id: 'doc2', vectors: [[0, 1, 0]]},
+            { id: 'doc3', vectors: [[0, 0, 1]]}
         ];
 
+        /** @type {Array<{
+         *   name: string,
+         *   query: number[],
+         *   expectFirst?: string,
+         *   expectLength?: number,
+         *   lookups?: number
+         * }>} */
         const searchTests = [
             {
                 name: 'finds exact match',
                 query: [1, 0, 0],
-                expectFirst: 'doc1',
-                expectChunk: 'chunk1'
+                expectFirst: 'doc1'
             },
             {
                 name: 'finds closest match',
@@ -116,14 +154,14 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
             }
         ];
 
-        searchTests.forEach(({name, query, expectFirst, expectLength, expectChunk, lookups}) => {
+        searchTests.forEach(({name, query, expectFirst, expectLength, lookups}) => {
             it(name, () => {
                 const testStore = lookups ? new VectorStore(mockLogger, lookups) : store;
                 testStore.addBatch(documents);
 
                 const results = testStore.findSimilar(query);
                 if (expectFirst) {
-                    assert.equal(results[0].documentID, expectFirst);
+                    assert.equal(results[0].id, expectFirst);
                 }
                 if (expectLength) {
                     assert.equal(results.length, expectLength);
@@ -133,27 +171,52 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
     });
 
     describe('similarity search with multiple chunks', () => {
+        /** @type {EmbeddingDocument[]} */
         const documentsWithChunks = [
-            { documentID: 'doc1', chunks: [[1, 0, 0], [0.9, 0.1, 0]] },  // Similar chunks
-            { documentID: 'doc2', chunks: [[0, 1, 0], [0, 0.9, 0.1]] },  // Diverse chunks
-            { documentID: 'doc3', chunks: [[0.3, 0.3, 0.3], [0.4, 0.4, 0.4]] }, // Average chunks
+            {
+                id: 'doc1',
+                vectors: [
+                    [1, 0, 0],
+                    [0.9, 0.1, 0]
+                ]
+            },
+            {
+                id: 'doc2',
+                vectors: [
+                    [0, 1, 0],
+                    [0, 0.9, 0.1]
+                ]
+            },
+            {
+                id: 'doc3',
+                vectors: [
+                    [0.3, 0.3, 0.3],
+                    [0.4, 0.4, 0.4]
+                ]
+            }
         ];
 
+        /**
+         * @type {Array<{
+         *   name: string,
+         *   query: number[],
+         *   expectFirst: string
+         * }>} */
         const multiChunkTests = [
             {
                 name: 'finds document with best max similarity',
                 query: [1, 0, 0],
-                expectFirst: 'doc1',  // Should match doc1's first chunk perfectly
+                expectFirst: 'doc1'  // Should match doc1's first chunk perfectly
             },
             {
                 name: 'weights multiple similar chunks higher',
                 query: [0.95, 0.05, 0],
-                expectFirst: 'doc1',  // Both chunks in doc1 are similar to query
+                expectFirst: 'doc1'  // Both chunks in doc1 are similar to query
             },
             {
                 name: 'balances max and average appropriately',
                 query: [0.3, 0.3, 0.3],
-                expectFirst: 'doc3',  // Lower max similarity but better average
+                expectFirst: 'doc3'  // Lower max similarity but better average
             }
         ];
 
@@ -161,12 +224,17 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
             it(name, () => {
                 store.addBatch(documentsWithChunks);
                 const results = store.findSimilar(query);
-                assert.equal(results[0].documentID, expectFirst);
+                assert.equal(results[0].id, expectFirst);
             });
         });
     });
 
     describe('statistics', () => {
+        /** @type {Array<{
+         *   name: string,
+         *   setup: () => void,
+         *   expect: VectorStoreStats
+         * }>} */
         const statsTests = [
             {
                 name: 'reports empty stats',
@@ -175,32 +243,38 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
                     documentCount: 0,
                     vectorDimensions: 0,
                     chunkCount: 0,
+                    storageSize: 41,
                     version: 1
                 }
             },
             {
                 name: 'reports correct stats with data',
-                setup: () => store.add('doc1', [
-                    [1, 2, 3],
-                    [4, 5, 6]
-                ], 'original'),
+                setup: () => store.add({
+                    id: 'doc1',
+                    vectors: [
+                        [1, 2, 3],
+                        [4, 5, 6]
+                    ]
+                }),
                 expect: {
                     documentCount: 1,
                     vectorDimensions: 3,
                     chunkCount: 2,
+                    storageSize: 156,
                     version: 1
                 }
             }
         ];
 
-        statsTests.forEach(({name, setup, expect}) => {
+        statsTests.forEach(({name, setup, expect: expected}) => {
             it(name, () => {
                 setup();
                 const stats = store.stats();
-                assert.equal(stats.documentCount, expect.documentCount);
-                assert.equal(stats.vectorDimensions, expect.vectorDimensions);
-                assert.equal(stats.chunkCount, expect.chunkCount);
-                assert.equal(stats.version, expect.version);
+                assert.equal(stats.documentCount, expected.documentCount);
+                assert.equal(stats.vectorDimensions, expected.vectorDimensions);
+                assert.equal(stats.chunkCount, expected.chunkCount);
+                assert.equal(stats.version, expected.version);
+                // Skip storageSize comparison as it might vary based on environment
             });
         });
     });

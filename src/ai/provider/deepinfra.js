@@ -1,5 +1,6 @@
 /**
  * DeepInfra provides AI capabilities using DeepInfra's model hosting
+ * @implements {AIProvider}
  */
 export class DeepInfra {
     #apiKey = null;
@@ -8,8 +9,7 @@ export class DeepInfra {
     #embeddingModels = null;
 
     /**
-     * @param {Object} config
-     * @param {string} config.apiKey - DeepInfra API key
+     * @param {AIProviderConfig} config
      */
     constructor(config) {
         if (!config.apiKey) {
@@ -18,6 +18,9 @@ export class DeepInfra {
         this.#apiKey = config.apiKey;
     }
 
+    /**
+     * @returns {Promise<string[]>}
+     */
     async getChatModels() {
         if (this.#chatModels !== null) {
             return this.#chatModels;
@@ -41,6 +44,9 @@ export class DeepInfra {
         return this.#chatModels;
     }
 
+    /**
+     * @returns {Promise<string[]>}
+     */
     async getEmbeddingModels() {
         if (this.#embeddingModels !== null) {
             return this.#embeddingModels;
@@ -66,7 +72,7 @@ export class DeepInfra {
 
     /**
      * @param {string} model
-     * @param {Array<{documentID: string, text: string}>} context
+     * @param {ContextDocument[]} context
      * @param {string} query
      * @param {boolean} [stream=false]
      * @returns {Promise<string> | AsyncGenerator<string, string>}
@@ -120,11 +126,11 @@ export class DeepInfra {
 
     /**
      * @param {string} model
-     * @param {string} documentID
-     * @param {Array<string>} chunks
-     * @returns {Promise<{documentID: string, chunks: Array<Array<Number>>}>}
+     * @param {string} id
+     * @param {Chunk[]} chunks
+     * @returns {Promise<EmbeddingDocument>}
      */
-    async embed(model, documentID, chunks) {
+    async embed(model, id, chunks) {
         const response = await fetch(`${this.#baseUrl}/${model}`, {
             method: 'POST',
             headers: {
@@ -142,17 +148,22 @@ export class DeepInfra {
 
         const data = await response.json();
         return {
-            documentID,
-            chunks: data.embeddings
+            id,
+            vectors: data.embeddings
         };
     }
 
     /**
      * Formats context and query for the chat model
      * @private
+     * @param {ContextDocument[]} context
+     * @param {string} query
+     * @returns {string}
      */
     #formatChatInput(context, query) {
-        // This will need to be adjusted based on the specific model being used
-        return `Context:\n${context.map(c => c.text).join('\n\n')}\n\nQuestion: ${query}`;
+        return `Context:
+${context.map(doc => `# ${doc.title}\n${doc.content}`).join('\n\n')}
+
+Question: ${query}`;
     }
 }

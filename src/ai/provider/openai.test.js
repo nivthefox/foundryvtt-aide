@@ -1,14 +1,14 @@
 import { Suite } from '../../app/quench';
 import { OpenAI } from './openai';
 
-Suite('ai.vendor.openai', OpenAIVendorTest);
-export default function OpenAIVendorTest({describe, it, assert, beforeEach, afterEach}) {
-    let vendor;
+Suite('ai.provider.openai', OpenAIProviderTest);
+export default function OpenAIProviderTest({describe, it, assert, beforeEach, afterEach}) {
+    let provider;
     let originalFetch;
 
     beforeEach(() => {
         originalFetch = globalThis.fetch;
-        vendor = new OpenAI({ apiKey: 'test-key' });
+        provider = new OpenAI({ apiKey: 'test-key' });
     });
 
     afterEach(() => {
@@ -32,12 +32,12 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
                 };
             };
 
-            const customVendor = new OpenAI({
+            const customProvider = new OpenAI({
                 apiKey: 'test-key',
                 baseURL: 'https://custom.openai.api/v1'
             });
 
-            await customVendor.getChatModels();
+            await customProvider.getChatModels();
             assert.equal(capturedUrl, 'https://custom.openai.api/v1/models');
         });
     });
@@ -57,7 +57,7 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
                             { id: 'gpt-3.5-turbo' },
                             { id: 'text-embedding-3-small' },
                             { id: 'text-embedding-3-large' },
-                            { id: 'dall-e-3' }  // Non-text model
+                            { id: 'dall-e-3' }
                         ]
                     })
                 };
@@ -65,16 +65,16 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
         });
 
         it('caches chat models', async () => {
-            const models1 = await vendor.getChatModels();
-            const models2 = await vendor.getChatModels();
+            const models1 = await provider.getChatModels();
+            const models2 = await provider.getChatModels();
             assert.deepEqual(models1, ['gpt-4', 'gpt-3.5-turbo']);
             assert.deepEqual(models2, ['gpt-4', 'gpt-3.5-turbo']);
             assert.equal(fetchCount, 1, 'Should only fetch once');
         });
 
         it('caches embedding models', async () => {
-            const models1 = await vendor.getEmbeddingModels();
-            const models2 = await vendor.getEmbeddingModels();
+            const models1 = await provider.getEmbeddingModels();
+            const models2 = await provider.getEmbeddingModels();
             assert.deepEqual(models1, ['text-embedding-3-small', 'text-embedding-3-large']);
             assert.deepEqual(models2, ['text-embedding-3-small', 'text-embedding-3-large']);
             assert.equal(fetchCount, 1, 'Should only fetch once');
@@ -82,7 +82,12 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
     });
 
     describe('generation', () => {
-        const context = [{ documentID: 'test', text: 'context text' }];
+        /** @type {ContextDocument[]} */
+        const context = [{
+            id: 'test',
+            title: 'Test Document',
+            content: 'test context'
+        }];
         const query = 'test query';
 
         it('generates non-streaming response', async () => {
@@ -97,7 +102,7 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
                 })
             });
 
-            const response = await vendor.generate('gpt-4', context, query);
+            const response = await provider.generate('gpt-4', context, query);
             assert.equal(response, 'test response');
         });
 
@@ -109,7 +114,7 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
             });
 
             try {
-                await vendor.generate('gpt-4', context, query);
+                await provider.generate('gpt-4', context, query);
                 assert.fail('Should have thrown an error');
             } catch (error) {
                 assert.equal(error.message, 'OpenAI API error: 400');
@@ -141,7 +146,7 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
                 }
             });
 
-            const stream = await vendor.generate('gpt-4', context, query, true);
+            const stream = await provider.generate('gpt-4', context, query, true);
             const received = [];
             for await (const chunk of stream) {
                 received.push(chunk);
@@ -162,13 +167,17 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
                 })
             });
 
-            const result = await vendor.embed(
+            /** @type {Chunk[]} */
+            const chunks = ['chunk1', 'chunk2'];
+
+            const result = await provider.embed(
                 'text-embedding-3-small',
                 'test-doc',
-                ['chunk1', 'chunk2']
+                chunks
             );
-            assert.equal(result.documentID, 'test-doc');
-            assert.deepEqual(result.chunks, [mockEmbedding, mockEmbedding]);
+
+            assert.equal(result.id, 'test-doc');
+            assert.deepEqual(result.vectors, [mockEmbedding, mockEmbedding]);
         });
 
         it('handles embedding errors', async () => {
@@ -179,7 +188,11 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
             });
 
             try {
-                await vendor.embed('text-embedding-3-small', 'test-doc', ['chunk']);
+                await provider.embed(
+                    'text-embedding-3-small',
+                    'test-doc',
+                    ['chunk']
+                );
                 assert.fail('Should have thrown an error');
             } catch (error) {
                 assert.equal(error.message, 'OpenAI API error: 400');
@@ -204,7 +217,7 @@ export default function OpenAIVendorTest({describe, it, assert, beforeEach, afte
                 };
             };
 
-            await vendor.generate('gpt-4', [], 'test');
+            await provider.generate('gpt-4', [], 'test');
 
             assert.equal(capturedHeaders['Authorization'], 'Bearer test-key');
             assert.equal(capturedHeaders['Content-Type'], 'application/json');

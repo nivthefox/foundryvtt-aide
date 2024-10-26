@@ -16,9 +16,11 @@
             "silent": true
         }
     },
+    "types": "src/types.js",
     "scripts": {
         "build": "npm run lint:code && npm run build:code",
         "build:code": "npx rollup --config rollup.config.mjs",
+        "lint": "npm run lint:code",
         "lint:code": "npx eslint -c .eslintrc.json src/*/**.js",
         "watch:build:code": "npx rollup --config rollup.config.mjs --watch",
         "watch:lint:code": "npm-watch lint:code"
@@ -38,5 +40,8 @@
     },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "^4.21.0"
+    },
+    "dependencies": {
+        "@rollup/plugin-terser": "^0.4.4"
     }
 }

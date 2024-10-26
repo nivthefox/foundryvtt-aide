@@ -1,24 +1,25 @@
-import {Anthropic} from './vendor/anthropic.js';
-import {DeepInfra} from './vendor/deepinfra.js';
-import {OpenAI} from './vendor/openai';
+import {Anthropic} from './provider/anthropic.js';
+import {DeepInfra} from './provider/deepinfra.js';
+import {OpenAI} from './provider/openai';
 
 /**
  * Client provides AI capabilities including text embedding and chat generation.
+ * @implements {AIProvider}
  *
  * @description
- * The client handles communication with the AI service API, converting between
- * raw text and vector representations for semantic search, and generating
- * contextual chat responses.
+ * The client handles communication with the AI service provider, converting
+ * between raw text and vector representations for semantic search, and
+ * generating contextual chat responses.
  *
  * Documents are embedded as fixed-dimension vectors suitable for similarity
  * comparisons. Chat generation incorporates relevant context to produce
  * targeted responses.
  *
- * Supports multiple AI vendors through a common interface.
+ * Supports multiple AI providers through a common interface.
  *
  * @example
  * ```javascript
-  * const client = Client.create("deepinfra", {apiKey: "my-api-key"});
+ * const client = Client.create("deepinfra", {apiKey: "my-api-key"});
  *
  * // Embedding documents
  * const documentChunks = ["chunk1 text", "chunk2 text"];
@@ -26,7 +27,7 @@ import {OpenAI} from './vendor/openai';
  *
  * // Generating responses
  * const context = [
- *   { documentID: "doc1", text: "relevant context" }
+ *   { id: "doc1", title: "Title", content: "relevant context" }
  * ];
  *
  * // Standard generation
@@ -42,11 +43,12 @@ import {OpenAI} from './vendor/openai';
  * ```
  */
 export class Client {
+    /** @type {AIProvider} */
     #implementation = null;
 
     /**
      * @private
-     * @param {AIImplementation} implementation
+     * @param {AIProvider} implementation
      */
     constructor(implementation) {
         if (!implementation) {
@@ -58,18 +60,18 @@ export class Client {
     /**
      * Create a new AI client
      *
-     * @param {string} vendor
-     * @param {Object} configuration
+     * @param {string} provider
+     * @param {AIProviderConfig} configuration
      * @returns {Client}
      */
-    static create(vendor, configuration) {
-        const implementation = Client.#createImplementation(vendor, configuration);
+    static create(provider, configuration) {
+        const implementation = Client.#createImplementation(provider, configuration);
         return new Client(implementation);
     }
 
     /**
      * getChatModels retrieves available chat models from the AI service
-     * @returns {Promise<Array<string>>}
+     * @returns {Promise<string[]>}
      */
     async getChatModels() {
         return this.#implementation.getChatModels();
@@ -77,7 +79,7 @@ export class Client {
 
     /**
      * getEmbeddingModels retrieves available embedding models from the AI service
-     * @returns {Promise<Array<string>>}
+     * @returns {Promise<string[]>}
      */
     async getEmbeddingModels() {
         return this.#implementation.getEmbeddingModels();
@@ -87,12 +89,12 @@ export class Client {
      * Generate creates a chat response based on the query and provided context
      *
      * @param {string} model
-     * @param {Array<{documentID: string, text: string}>} context
+     * @param {ContextDocument[]} context
      * @param {string} query
      * @param {boolean} [stream=false]
-     * @returns Promise<{string} | AsyncGenerator<string, string>}
+     * @returns {Promise<string> | AsyncGenerator<string, string>}
      */
-    async generate(model, context, query, stream= false) {
+    async generate(model, context, query, stream = false) {
         return this.#implementation.generate(model, context, query, stream);
     }
 
@@ -100,16 +102,22 @@ export class Client {
      * Embed a document into a vector representation
      *
      * @param {string} model
-     * @param {string} documentID
-     * @param {Array<string>} chunks
-     * @returns Promise<{documentID: string, chunks: Array<Array<Number>>}>
+     * @param {string} id
+     * @param {Chunk[]} chunks
+     * @returns {Promise<EmbeddingDocument>}
      */
-    async embed(model, documentID, chunks) {
-        return this.#implementation.embed(model, documentID, chunks);
+    async embed(model, id, chunks) {
+        return this.#implementation.embed(model, id, chunks);
     }
 
-    static #createImplementation(vendor, configuration) {
-        switch (vendor.toLowerCase()) {
+    /**
+     * @private
+     * @param {string} provider
+     * @param {AIProviderConfig} configuration
+     * @returns {AIProvider}
+     */
+    static #createImplementation(provider, configuration) {
+        switch (provider.toLowerCase()) {
             case 'anthropic':
                 return new Anthropic(configuration);
             case 'deepinfra':
@@ -117,7 +125,7 @@ export class Client {
             case 'openai':
                 return new OpenAI(configuration);
             default:
-                throw new Error(`Unsupported vendor: ${vendor}`);
+                throw new Error(`Unsupported provider: ${provider}`);
         }
     }
 }

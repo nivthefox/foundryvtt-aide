@@ -17,14 +17,14 @@
       "systems": []
     },
     "esmodules": [
-      "./aide.js",
-      "./aide.test.js"
+      "./dist/aide.js",
+      "./dist/aide.test.js"
     ],
     "languages": [
       {
         "lang": "en",
         "name": "English",
-        "path": "lang/en.json"
+        "path": "dist/lang/en.json"
       }
     ],
     "url":		"https://github.com/nivthefox/foundryvtt-aide",

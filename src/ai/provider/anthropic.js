@@ -1,28 +1,26 @@
 /**
- * OpenAI provides AI capabilities using OpenAI's models
+ * Anthropic provides AI capabilities using Anthropic's Claude models
+ * @implements {AIProvider}
  */
-export class OpenAI {
+export class Anthropic {
     #apiKey = null;
-    #baseUrl = 'https://api.openai.com/v1';
+    #baseUrl = 'https://api.anthropic.com/v1';
     #chatModels = null;
     #embeddingModels = null;
 
     /**
-     * @param {Object} config
-     * @param {string} config.apiKey - OpenAI API key
-     * @param {string} [config.baseURL='https://api.openai.com/v1'] - OpenAI API base URL
+     * @param {AIProviderConfig} config
      */
     constructor(config) {
         if (!config.apiKey) {
-            throw new Error('OpenAI API key is required');
+            throw new Error('Anthropic API key is required');
         }
         this.#apiKey = config.apiKey;
-
-        if (config.baseURL) {
-            this.#baseUrl = config.baseURL;
-        }
     }
 
+    /**
+     * @returns {Promise<string[]>}
+     */
     async getChatModels() {
         if (this.#chatModels !== null) {
             return this.#chatModels;
@@ -30,22 +28,26 @@ export class OpenAI {
 
         const response = await fetch(`${this.#baseUrl}/models`, {
             headers: {
-                'Authorization': `Bearer ${this.#apiKey}`
+                'x-api-key': this.#apiKey,
+                'anthropic-version': '2023-06-01'
             }
         });
 
         if (!response.ok) {
-            throw new Error(`OpenAI API error: ${response.status}`);
+            throw new Error(`Anthropic API error: ${response.status}`);
         }
 
         const data = await response.json();
-        this.#chatModels = data.data
-            .filter(model => model.id.startsWith('gpt-'))
+        this.#chatModels = data.models
+            .filter(model => model.capabilities.completion)
             .map(model => model.id);
 
         return this.#chatModels;
     }
 
+    /**
+     * @returns {Promise<string[]>}
+     */
     async getEmbeddingModels() {
         if (this.#embeddingModels !== null) {
             return this.#embeddingModels;
@@ -53,17 +55,18 @@ export class OpenAI {
 
         const response = await fetch(`${this.#baseUrl}/models`, {
             headers: {
-                'Authorization': `Bearer ${this.#apiKey}`
+                'x-api-key': this.#apiKey,
+                'anthropic-version': '2023-06-01'
             }
         });
 
         if (!response.ok) {
-            throw new Error(`OpenAI API error: ${response.status}`);
+            throw new Error(`Anthropic API error: ${response.status}`);
         }
 
         const data = await response.json();
-        this.#embeddingModels = data.data
-            .filter(model => model.id.startsWith('text-embedding-'))
+        this.#embeddingModels = data.models
+            .filter(model => model.capabilities.embedding)
             .map(model => model.id);
 
         return this.#embeddingModels;
@@ -71,36 +74,36 @@ export class OpenAI {
 
     /**
      * @param {string} model
-     * @param {Array<{documentID: string, text: string}>} context
+     * @param {ContextDocument[]} context
      * @param {string} query
      * @param {boolean} [stream=false]
      * @returns {Promise<string> | AsyncGenerator<string, string>}
      */
     async generate(model, context, query, stream = false) {
+        const systemPrompt = `You are a helpful AI assistant. Use this context to answer the user's question:
+${context.map(doc => `# ${doc.title}\n${doc.content}`).join('\n\n')}`;
+
         const messages = [
-            {
-                role: 'system',
-                content: `You are a helpful AI assistant. Use this context to answer the user's question:
-${context.map(c => c.text).join('\n\n')}`
-            },
             { role: 'user', content: query }
         ];
 
-        const response = await fetch(`${this.#baseUrl}/chat/completions`, {
+        const response = await fetch(`${this.#baseUrl}/messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.#apiKey}`
+                'x-api-key': this.#apiKey,
+                'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
                 model,
                 messages,
+                system: systemPrompt,
                 stream
             })
         });
 
         if (!response.ok) {
-            throw new Error(`OpenAI API error: ${response.status}`);
+            throw new Error(`Anthropic API error: ${response.status}`);
         }
 
         if (stream) {
@@ -118,8 +121,8 @@ ${context.map(c => c.text).join('\n\n')}`
                     for (const line of lines) {
                         if (line.startsWith('data: ')) {
                             const data = JSON.parse(line.slice(6));
-                            if (data.choices?.[0]?.delta?.content) {
-                                yield data.choices[0].delta.content;
+                            if (data.type === 'content_block_delta' && data.delta?.text) {
+                                yield data.delta.text;
                             }
                         }
                     }
@@ -127,24 +130,25 @@ ${context.map(c => c.text).join('\n\n')}`
             })();
         } else {
             const data = await response.json();
-            return data.choices[0].message.content;
+            return data.content[0].text;
         }
     }
 
     /**
      * @param {string} model
-     * @param {string} documentID
-     * @param {Array<string>} chunks
-     * @returns {Promise<{documentID: string, chunks: Array<Array<Number>>}>}
+     * @param {string} id
+     * @param {Chunk[]} chunks
+     * @returns {Promise<EmbeddingDocument>}
      */
-    async embed(model, documentID, chunks) {
-        const embeddings = await Promise.all(
+    async embed(model, id, chunks) {
+        const responses = await Promise.all(
             chunks.map(chunk =>
                 fetch(`${this.#baseUrl}/embeddings`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.#apiKey}`
+                        'x-api-key': this.#apiKey,
+                        'anthropic-version': '2023-06-01'
                     },
                     body: JSON.stringify({
                         model,
@@ -152,16 +156,17 @@ ${context.map(c => c.text).join('\n\n')}`
                     })
                 }).then(async r => {
                     if (!r.ok) {
-                        throw new Error(`OpenAI API error: ${r.status}`);
+                        throw new Error(`Anthropic API error: ${r.status}`);
                     }
-                    return r.json();
+                    const response = await r.json();
+                    return response.embedding;
                 })
             )
         );
 
         return {
-            documentID,
-            chunks: embeddings.map(e => e.data[0].embedding)
+            id,
+            vectors: responses
         };
     }
 }

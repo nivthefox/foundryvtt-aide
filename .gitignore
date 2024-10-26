@@ -1,7 +1,3 @@
+dist/
 node_modules/
-lang/
 
-aide.js
-aide.js.map
-aide.test.js
-aide.test.js.map

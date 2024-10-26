@@ -1,14 +1,14 @@
 import { Suite } from '../../app/quench';
-import { DeepInfra } from './deepinfra';
+import { Anthropic } from './anthropic';
 
-Suite('ai.vendor.deepinfra', DeepInfraVendorTest);
-export default function DeepInfraVendorTest({describe, it, assert, beforeEach, afterEach}) {
-    let vendor;
+Suite('ai.provider.anthropic', AnthropicProviderTest);
+export default function AnthropicProviderTest({describe, it, assert, beforeEach, afterEach}) {
+    let provider;
     let originalFetch;
 
     beforeEach(() => {
         originalFetch = globalThis.fetch;
-        vendor = new DeepInfra({ apiKey: 'test-key' });
+        provider = new Anthropic({ apiKey: 'test-key' });
     });
 
     afterEach(() => {
@@ -17,7 +17,7 @@ export default function DeepInfraVendorTest({describe, it, assert, beforeEach, a
 
     describe('initialization', () => {
         it('requires API key', () => {
-            assert.throws(() => new DeepInfra({}), /API key is required/);
+            assert.throws(() => new Anthropic({}), /API key is required/);
         });
     });
 
@@ -32,9 +32,18 @@ export default function DeepInfraVendorTest({describe, it, assert, beforeEach, a
                     ok: true,
                     json: async () => ({
                         models: [
-                            { id: 'model1', type: 'text-generation' },
-                            { id: 'model2', type: 'embedding' },
-                            { id: 'model3', type: 'other' }
+                            {
+                                id: 'model1',
+                                capabilities: { completion: true, embedding: false }
+                            },
+                            {
+                                id: 'model2',
+                                capabilities: { completion: false, embedding: true }
+                            },
+                            {
+                                id: 'model3',
+                                capabilities: { completion: false, embedding: false }
+                            }
                         ]
                     })
                 };
@@ -42,16 +51,16 @@ export default function DeepInfraVendorTest({describe, it, assert, beforeEach, a
         });
 
         it('caches chat models', async () => {
-            const models1 = await vendor.getChatModels();
-            const models2 = await vendor.getChatModels();
+            const models1 = await provider.getChatModels();
+            const models2 = await provider.getChatModels();
             assert.deepEqual(models1, ['model1']);
             assert.deepEqual(models2, ['model1']);
             assert.equal(fetchCount, 1, 'Should only fetch once');
         });
 
         it('caches embedding models', async () => {
-            const models1 = await vendor.getEmbeddingModels();
-            const models2 = await vendor.getEmbeddingModels();
+            const models1 = await provider.getEmbeddingModels();
+            const models2 = await provider.getEmbeddingModels();
             assert.deepEqual(models1, ['model2']);
             assert.deepEqual(models2, ['model2']);
             assert.equal(fetchCount, 1, 'Should only fetch once');
@@ -59,42 +68,44 @@ export default function DeepInfraVendorTest({describe, it, assert, beforeEach, a
     });
 
     describe('generation', () => {
-        const context = [{ documentID: 'test', text: 'context text' }];
+        /** @type {ContextDocument[]} */
+        const context = [{
+            id: 'test',
+            title: 'Test Document',
+            content: 'context text'
+        }];
         const query = 'test query';
 
         it('generates non-streaming response', async () => {
             globalThis.fetch = async () => ({
                 ok: true,
                 json: async () => ({
-                    results: [{
-                        generated_text: 'test response'
-                    }]
+                    content: [{ text: 'test response' }]
                 })
             });
 
-            const response = await vendor.generate('meta-llama/Llama-2-70b-chat', context, query);
+            const response = await provider.generate('claude-3-opus-20240229', context, query);
             assert.equal(response, 'test response');
         });
 
         it('handles generation errors', async () => {
             globalThis.fetch = async () => ({
                 ok: false,
-                status: 400,
-                json: async () => ({ error: 'Bad request' })
+                status: 400
             });
 
             try {
-                await vendor.generate('meta-llama/Llama-2-70b-chat', context, query);
+                await provider.generate('claude-3-opus-20240229', context, query);
                 assert.fail('Should have thrown an error');
             } catch (error) {
-                assert.equal(error.message, 'DeepInfra API error: 400');
+                assert.equal(error.message, 'Anthropic API error: 400');
             }
         });
 
         it('generates streaming response', async () => {
             const chunks = [
-                '{"token":{"text":"Hello"}}\n',
-                '{"token":{"text":" world"}}\n'
+                'data: {"type":"content_block_delta","delta":{"text":"Hello"}}\n\n',
+                'data: {"type":"content_block_delta","delta":{"text":" world"}}\n\n'
             ];
 
             let chunkIndex = 0;
@@ -116,7 +127,7 @@ export default function DeepInfraVendorTest({describe, it, assert, beforeEach, a
                 }
             });
 
-            const stream = await vendor.generate('meta-llama/Llama-2-70b-chat', context, query, true);
+            const stream = await provider.generate('claude-3-opus-20240229', context, query, true);
             const received = [];
             for await (const chunk of stream) {
                 received.push(chunk);
@@ -127,36 +138,62 @@ export default function DeepInfraVendorTest({describe, it, assert, beforeEach, a
 
     describe('embedding', () => {
         it('embeds document chunks', async () => {
-            const mockEmbeddings = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]];
+            const mockEmbedding = [0.1, 0.2, 0.3];
             globalThis.fetch = async () => ({
                 ok: true,
                 json: async () => ({
-                    embeddings: mockEmbeddings
+                    embedding: mockEmbedding
                 })
             });
 
-            const result = await vendor.embed(
-                'BAAI/bge-large-en-v1.5',
+            /** @type {Chunk[]} */
+            const chunks = ['chunk1', 'chunk2'];
+
+            const result = await provider.embed(
+                'claude-3-sonnet-20240229-embedding',
                 'test-doc',
-                ['chunk1', 'chunk2']
+                chunks
             );
-            assert.equal(result.documentID, 'test-doc');
-            assert.deepEqual(result.chunks, mockEmbeddings);
+
+            assert.equal(result.id, 'test-doc');
+            assert.deepEqual(result.vectors, [mockEmbedding, mockEmbedding]);
         });
 
         it('handles embedding errors', async () => {
             globalThis.fetch = async () => ({
                 ok: false,
-                status: 400,
-                json: async () => ({ error: 'Bad request' })
+                status: 400
             });
 
             try {
-                await vendor.embed('BAAI/bge-large-en-v1.5', 'test-doc', ['chunk']);
+                await provider.embed(
+                    'claude-3-sonnet-20240229-embedding',
+                    'test-doc',
+                    ['chunk']
+                );
                 assert.fail('Should have thrown an error');
             } catch (error) {
-                assert.equal(error.message, 'DeepInfra API error: 400');
+                assert.equal(error.message, 'Anthropic API error: 400');
             }
+        });
+    });
+
+    describe('API requests', () => {
+        it('sets correct headers', async () => {
+            let capturedHeaders;
+            globalThis.fetch = async (url, options) => {
+                capturedHeaders = options.headers;
+                return {
+                    ok: true,
+                    json: async () => ({content: [{text: ''}]})
+                };
+            };
+
+            await provider.generate('claude-3-opus-20240229', [], 'test');
+
+            assert.equal(capturedHeaders['x-api-key'], 'test-key');
+            assert.equal(capturedHeaders['Content-Type'], 'application/json');
+            assert.equal(capturedHeaders['anthropic-version'], '2023-06-01');
         });
     });
 }

@@ -28,7 +28,7 @@ jobs:
       - run: npm ci --cache .npm --prefer-offline
 
       # # build sass, pack packs, run rollup
-      - run: npm run build
+      - run: NODE_ENV=production npm run build
 
       # Substitute the Manifest and Download URLs in the module.json
       - name: Substitute Manifest and Download Links For Versioned Ones

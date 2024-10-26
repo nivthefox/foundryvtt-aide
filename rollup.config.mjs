@@ -3,9 +3,10 @@ import copy from 'rollup-plugin-copy';
 import json from '@rollup/plugin-json';
 import match from 'rollup-plugin-match';
 import nodeResolve from "@rollup/plugin-node-resolve";
+import terser from '@rollup/plugin-terser';
 import * as yaml from 'js-yaml';
 
-
+// License banner
 const banner = `/**
  * Copyright 2024 Kevin Kragenbrink, II
  * 
@@ -26,63 +27,113 @@ const banner = `/**
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **/
-`
+`;
 
+// Shared configuration
+const sharedConfig = {
+    treeshake: {
+        moduleSideEffects: false,
+        propertyReadSideEffects: false,
+        tryCatchDeoptimization: false
+    },
+    watch: {
+        clearScreen: false,
+        exclude: 'node_modules/**'
+    }
+};
+
+// Shared plugins
+const createCommonPlugins = (isProduction) => [
+    json({
+        preferConst: true,
+        compact: isProduction
+    }),
+    nodeResolve({
+        browser: true,
+        preferBuiltins: false
+    }),
+    isProduction && terser({
+        format: {
+            comments: function(node, comment) {
+                if (comment.type === "comment2") {
+                    // Preserve license comments
+                    return /@preserve|@license|@cc_on|Copyright/i.test(comment.value);
+                }
+                return false;
+            }
+        }
+    })
+].filter(Boolean);
+
+// Production flag
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Main bundle configuration
 const main = {
+    ...sharedConfig,
     input: 'src/main.js',
     output: {
-        file: 'aide.js',
+        file: `dist/aide${isProduction ? '.min' : ''}.js`,
         format: 'es',
-        sourcemap: true,
-        banner
+        sourcemap: !isProduction,
+        banner,
+        compact: isProduction
     },
     plugins: [
-        json({
-            preferConst: true
-        }),
-        nodeResolve({
-            browser: true
-        }),
+        ...createCommonPlugins(isProduction),
         copy({
             targets: [
                 {
                     src: ['./src/lang/*.yaml'],
-                    dest: './lang',
-                    transform: (content, src, dest) => {
-                        const lang = yaml.load(content, { schema: yaml.JSON_SCHEMA });
-                        return JSON.stringify(lang, null, 2);
+                    dest: './dist/lang',
+                    transform: (content) => {
+                        try {
+                            const lang = yaml.load(content, {
+                                schema: yaml.JSON_SCHEMA,
+                                strict: true
+                            });
+                            return JSON.stringify(lang, null, isProduction ? 0 : 2);
+                        } catch (error) {
+                            console.error('Error transforming YAML:', error);
+                            throw error;
+                        }
                     },
-                    rename: (name, ext, srcPath) => `${name}.json`
+                    rename: (name) => `${name}.json`
                 }
-            ]
-        }),
-    ],
-    watch: {
-        include: ['src/**/*.js', 'src/lang/*.yaml'],
-    }
+            ],
+            hookTimeout: 30000
+        })
+    ]
 };
 
+// Test bundle configuration
 const tests = {
+    ...sharedConfig,
     input: 'src/**/*.test.js',
     output: {
-        file: 'aide.test.js',
+        file: `dist/aide.test${isProduction ? '.min' : ''}.js`,
         format: 'es',
         sourcemap: true,
-        banner
+        banner,
+        compact: false // Never compact test code
     },
     plugins: [
-        match(),
-        combine(),
-        json({
-            preferConst: true
+        match({
+            // Add specific patterns if needed
+            include: ['**/*.test.js']
         }),
-        nodeResolve({
-            browser: true,
+        combine({
+            // Add combine options if needed
         }),
-    ],
-    watch: {
-        include: ['src/**/*.test.js', 'src/app/Quench.js']
-    }
-}
+        ...createCommonPlugins(false) // Never minify test code
+    ]
+};
 
-export default [main, tests];
+export default (commandLineArgs) => {
+    // Allow command line arguments to modify the config
+    if (commandLineArgs.watch) {
+        console.log('👀 Watching for changes...');
+    }
+
+    return [main, tests];
+};

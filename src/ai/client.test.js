@@ -1,6 +1,6 @@
 import { Suite } from '../app/quench';
 import { Client } from './client';
-import { MockVendor } from '././vendor/mock_vendor';
+import { MockProvider } from './provider/mock_provider';
 
 Suite('ai.client', ClientTest);
 export default function ClientTest({describe, it, assert, beforeEach}) {
@@ -8,7 +8,7 @@ export default function ClientTest({describe, it, assert, beforeEach}) {
     let client;
 
     beforeEach(() => {
-        mock = new MockVendor();
+        mock = new MockProvider();
         client = new Client(mock);
     });
 
@@ -34,26 +34,36 @@ export default function ClientTest({describe, it, assert, beforeEach}) {
 
     describe('document embedding', () => {
         it('embeds document chunks', async () => {
-            const documentID = 'doc1';
+            const id = 'doc1';
+            /** @type {Chunk[]} */
             const chunks = ['chunk1', 'chunk2'];
-            const vectors = [[1, 2], [3, 4]];
-            mock.setEmbedResponse({documentID, chunks: vectors});
+            /** @type {EmbeddingDocument} */
+            const mockResponse = {
+                id,
+                vectors: [[1, 2], [3, 4]]
+            };
+            mock.setEmbedResponse(mockResponse);
 
-            const result = await client.embed('model1', documentID, chunks);
+            const result = await client.embed('model1', id, chunks);
 
             const calls = mock.getEmbedCalls();
             assert.equal(calls.length, 1);
             assert.deepEqual(calls[0], {
                 model: 'model1',
-                documentID,
+                id,
                 chunks
             });
-            assert.deepEqual(result, {documentID, chunks: vectors});
+            assert.deepEqual(result, mockResponse);
         });
     });
 
     describe('chat generation', () => {
-        const context = [{documentID: 'doc1', text: 'context'}];
+        /** @type {ContextDocument[]} */
+        const context = [{
+            id: 'doc1',
+            title: 'Test Document',
+            content: 'test context'
+        }];
         const query = 'test query';
 
         it('generates non-streaming response', async () => {
@@ -104,9 +114,9 @@ export default function ClientTest({describe, it, assert, beforeEach}) {
     });
 
     describe('factory creation', () => {
-        it('creates client with vendor configuration', () => {
-            assert.throws(() => Client.create('invalid', {}), /Unsupported vendor/);
-            // Additional vendor creation tests would go here once we have real vendors
+        it('creates client with provider configuration', () => {
+            assert.throws(() => Client.create('invalid', {}), /Unsupported provider/);
+            // Additional provider creation tests would go here once we have real providers
         });
     });
 }

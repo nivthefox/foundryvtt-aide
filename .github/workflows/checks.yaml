@@ -57,4 +57,4 @@ jobs:
         run: npm ci --cache .npm --prefer-offline
 
       - name: Build
-        run: npm run build:code
+        run: NODE_ENV=production npm run build:code

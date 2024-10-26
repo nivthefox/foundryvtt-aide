@@ -1,6 +1,6 @@
 /**
- *  STORAGE_KEY is a unique identifier for the location in local storage
- *  @type {string}
+ * STORAGE_KEY is a unique identifier for the location in local storage
+ * @type {string}
  */
 const STORAGE_KEY = 'foundryvtt.aide.vectors';
 
@@ -12,34 +12,26 @@ const STORAGE_KEY = 'foundryvtt.aide.vectors';
 const STORAGE_FORMAT_VERSION = 1;
 
 /**
- * VectorStore provides semantic search across documents using vector embeddings
+ * VectorStore manages the storage and comparison of document vectors
  *
- * @description
- * Manages document vectors for similarity-based search and retrieval. Documents
- * are split into chunks, with each chunk represented by a vector embedding.
- * When searching, documents are ranked using a configurable weighted
- * combination:
- * - Maximum chunk similarity (default 70% weight)
- * - Average chunk similarity (default 30% weight)
+ * Each document is represented by an array of chunk vectors which are compared
+ * to a query vector to find the most similar documents in the store.
  *
- * The store maintains a two-layer architecture:
- * - In-memory cache for fast vector computations
- * - LocalStorage backing for persistence
- *
- * Data is immediately available in memory and asynchronously persisted to
- * storage for durability (eventual consistency model).
- *
- * @example
- * ```javascript
- * const store = new VectorStore(logger);
- * store.add('doc1', [[0.1, 0.2], [0.3, 0.4]]); // Add document chunks
- * const similar = store.findSimilar([0.1, 0.2]); // Find similar docs
- * ```
+ * The store uses a weighted combination of maximum and average chunk similarity
+ * to rank documents.
  */
 export class VectorStore {
+    /** @type {Map<string, Vector[]>} */
     #cache = new Map();
+
+    /** @type {number} */
     #dimension = 0;
 
+    /**
+     * @param {{debug: Function, error: Function}} logger
+     * @param {number} [lookups=3]
+     * @param {number} [maxWeight=0.7]
+     */
     constructor(logger, lookups = 3, maxWeight = 0.7) {
         this.logger = logger;
         this.lookups = lookups;
@@ -49,27 +41,26 @@ export class VectorStore {
 
     /**
      * add will add a new document and its chunk vectors to the store
-     * @param {string} documentID
-     * @param {Array<{vector: Array<number>, text: string}>} chunks
+     * @param {EmbeddingDocument} document
      * @returns {void}
      */
-    add(documentID, chunks) {
-        chunks.forEach(chunk => this.#validateVector(chunk, documentID));
-        this.#cache.set(documentID, chunks);
+    add(document) {
+        document.vectors.forEach(vector => this.#validateVector(vector, document.id));
+        this.#cache.set(document.id, document.vectors);
         queueMicrotask(() => this.#saveToStorage());
     }
 
     /**
      * addBatch will add multiple documents and their chunks to the store
-     * @param {{documentID: string, chunks: Array<Array<Number>>}} entries
+     * @param {EmbeddingDocument[]} documents
      * @returns {void}
      */
-    addBatch(entries) {
-        entries.forEach(({documentID, chunks}) =>
-            chunks.forEach(chunk => this.#validateVector(chunk, documentID))
+    addBatch(documents) {
+        documents.forEach(({id, vectors}) =>
+            vectors.forEach(vector => this.#validateVector(vector, id))
         );
-        entries.forEach(({documentID, chunks}) =>
-            this.#cache.set(documentID, chunks)
+        documents.forEach(({id, vectors}) =>
+            this.#cache.set(id, vectors)
         );
         queueMicrotask(() => this.#saveToStorage());
     }
@@ -85,16 +76,16 @@ export class VectorStore {
     /**
      * findSimilar will find the most similar documents to a given query vector
      * using a weighted combination of maximum and average chunk similarity
-     * @param {Array<number>} queryVector
-     * @returns {{documentID: string, similarity: number}[]}
+     * @param {Vector} queryVector
+     * @returns {SimilarityResult[]}
      */
     findSimilar(queryVector) {
         const avgWeight = 1 - this.maxWeight;
 
         return Array.from(this.#cache.entries())
-            .map(([documentID, document]) => {
-                const similarities = document.map(chunk => ({
-                    similarity: cosineSimilarity(queryVector, chunk),
+            .map(([id, vectors]) => {
+                const similarities = vectors.map(vector => ({
+                    similarity: cosineSimilarity(queryVector, vector)
                 }));
 
                 const maxSim = similarities.reduce((max, curr) =>
@@ -104,11 +95,11 @@ export class VectorStore {
                     sum + curr.similarity, 0) / similarities.length;
 
                 return {
-                    documentID,
-                    similarity: (maxSim.similarity * this.maxWeight) + (avgSim * avgWeight),
+                    id,
+                    score: (maxSim.similarity * this.maxWeight) + (avgSim * avgWeight)
                 };
             })
-            .sort((a, b) => b.similarity - a.similarity)
+            .sort((a, b) => b.score - a.score)
             .slice(0, this.lookups);
     }
 
@@ -122,8 +113,7 @@ export class VectorStore {
 
     /**
      * stats returns statistics about the store
-     * @returns {{documentCount: number, vectorDimensions: number,
-     *            chunkCount: number, storageSize: number, version: number}}
+     * @returns {VectorStoreStats}
      */
     stats() {
         const totalChunks = Array.from(this.#cache.values())
@@ -137,10 +127,13 @@ export class VectorStore {
                 formatVersion: STORAGE_FORMAT_VERSION,
                 entries: Object.fromEntries(this.#cache.entries())
             }).length,
-            version: STORAGE_FORMAT_VERSION,
+            version: STORAGE_FORMAT_VERSION
         };
     }
 
+    /**
+     * @private
+     */
     #loadFromStorage() {
         try {
             const stored = localStorage.getItem(STORAGE_KEY) || '{}';
@@ -158,10 +151,17 @@ export class VectorStore {
         }
     }
 
+    /**
+     * @private
+     * @param {Object} stored
+     */
     #migrate(stored) {
         // todo: Migrate from one format version to another
     }
 
+    /**
+     * @private
+     */
     #saveToStorage() {
         try {
             const data = {
@@ -176,22 +176,34 @@ export class VectorStore {
         }
     }
 
-    #validateVector(vector, documentID) {
+    /**
+     * @private
+     * @param {Vector} vector
+     * @param {string} id
+     * @throws {Error} If the vector is invalid or dimensions don't match
+     */
+    #validateVector(vector, id) {
         if (!Array.isArray(vector) || !vector.every(n => typeof n === 'number')) {
-            throw new Error(`Vector for ${documentID} must be an array of numbers`);
+            throw new Error(`Vector for ${id} must be an array of numbers`);
         }
 
         if (this.#dimension === 0) {
             this.#dimension = vector.length;
         } else if (vector.length !== this.#dimension) {
             throw new Error(
-                `Vector dimension mismatch for ${documentID}. `
+                `Vector dimension mismatch for ${id}. `
                 + `Expected ${this.#dimension}, got ${vector.length}`
             );
         }
     }
 }
 
+/**
+ * Calculate cosine similarity between two vectors
+ * @param {number[]} vecA
+ * @param {number[]} vecB
+ * @returns {number}
+ */
 function cosineSimilarity(vecA, vecB) {
     const dot = vecA.reduce((sum, a, i) => sum + (a * vecB[i]), 0);
     const normA = Math.sqrt(vecA.reduce((sum, a) => sum + (a * a), 0));
