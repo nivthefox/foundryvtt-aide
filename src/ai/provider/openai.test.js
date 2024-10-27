@@ -1,4 +1,4 @@
-import { Suite } from '../../app/quench';
+import { Suite } from '../../../test/quench';
 import { OpenAI } from './openai';
 
 Suite('ai.provider.openai', OpenAIProviderTest);

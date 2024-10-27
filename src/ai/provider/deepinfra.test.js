@@ -1,4 +1,4 @@
-import { Suite } from '../../app/quench';
+import { Suite } from '../../../test/quench';
 import { DeepInfra } from './deepinfra';
 
 Suite('ai.provider.deepinfra', DeepInfraProviderTest);

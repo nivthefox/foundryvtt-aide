@@ -1,115 +1,82 @@
-import { Suite } from '../app/quench';
+
+import { Suite } from '../../test/quench';
 import { Client } from './client';
-import { MockProvider } from './provider/mock_provider';
+import { MockAIProvider } from './provider/provider.mock';
+
+import jsmock from '../../test/jsmock';
+const { MockController } = jsmock;
 
 Suite('ai.client', ClientTest);
-export default function ClientTest({describe, it, assert, beforeEach}) {
+export default function ClientTest(quench) {
+    let {beforeEach, describe, it, assert} = quench;
+
+    let ctrl = new MockController(quench);
     let mock;
     let client;
 
     beforeEach(() => {
-        mock = new MockProvider();
+        mock = new MockAIProvider(ctrl);
         client = new Client(mock);
     });
 
     describe('model listing', () => {
         it('retrieves chat models', async () => {
-            const expected = ['model1', 'model2'];
-            mock.setGetChatModelsResponse(expected);
-
+            mock.EXPECT().getChatModels().Return(['model1', 'model2']);
             const result = await client.getChatModels();
-            assert.deepEqual(result, expected);
-            assert.equal(mock.getChatModelsCalls().length, 1);
+            assert.deepEqual(result, ['model1', 'model2']);
         });
 
         it('retrieves embedding models', async () => {
-            const expected = ['embed1', 'embed2'];
-            mock.setGetEmbeddingModelsResponse(expected);
-
+            mock.EXPECT().getEmbeddingModels().Return(['embed1', 'embed2']);
             const result = await client.getEmbeddingModels();
-            assert.deepEqual(result, expected);
-            assert.equal(mock.getEmbeddingModelsCalls().length, 1);
+            assert.deepEqual(result, ['embed1', 'embed2']);
         });
     });
 
     describe('document embedding', () => {
         it('embeds document chunks', async () => {
-            const id = 'doc1';
-            /** @type {Chunk[]} */
-            const chunks = ['chunk1', 'chunk2'];
-            /** @type {EmbeddingDocument} */
-            const mockResponse = {
-                id,
+            mock.EXPECT().embed('model1', 'doc1', ['chunk1', 'chunk2']).Return({
+                id: 'doc1',
                 vectors: [[1, 2], [3, 4]]
-            };
-            mock.setEmbedResponse(mockResponse);
-
-            const result = await client.embed('model1', id, chunks);
-
-            const calls = mock.getEmbedCalls();
-            assert.equal(calls.length, 1);
-            assert.deepEqual(calls[0], {
-                model: 'model1',
-                id,
-                chunks
             });
-            assert.deepEqual(result, mockResponse);
+
+            const result = await client.embed('model1', 'doc1', ['chunk1', 'chunk2']);
+            assert.deepEqual(result, {
+                id: 'doc1',
+                vectors: [[1, 2], [3, 4]]
+            });
         });
     });
 
     describe('chat generation', () => {
-        /** @type {ContextDocument[]} */
         const context = [{
             id: 'doc1',
             title: 'Test Document',
             content: 'test context'
         }];
-        const query = 'test query';
 
         it('generates non-streaming response', async () => {
-            const expected = 'test response';
-            mock.setGenerateResponse(expected);
-
-            const result = await client.generate('model1', context, query);
-
-            const calls = mock.getGenerateCalls();
-            assert.equal(calls.length, 1);
-            assert.deepEqual(calls[0], {
-                model: 'model1',
-                context,
-                query,
-                stream: false
-            });
-            assert.equal(result, expected);
+            mock.EXPECT().generate('model1', context, 'test query', false).Return('Hello, world!');
+            const result = await client.generate('model1', context, 'test query');
+            assert.equal(result, 'Hello, world!');
         });
 
         it('generates streaming response', async () => {
-            const tokens = ['Hello', ' ', 'world'];
+            const tokens = ['Hello', 'Hello world', 'Hello world!'];
             const generator = (async function* () {
                 for (const token of tokens) {
                     yield token;
                 }
-                return tokens.join('');
+                return tokens[tokens.length - 1];
             })();
-            mock.setGenerateResponse(generator);
-
-            const stream = await client.generate('model1', context, query, true);
+            mock.EXPECT().generate('model1', context, 'test query', true).Return(generator);
+            const stream = await client.generate('model1', context, 'test query', true);
             assert(stream[Symbol.asyncIterator], 'Response should be an AsyncGenerator');
-
-            const received = [];
+            let i = 0;
             for await (const token of stream) {
-                received.push(token);
+                assert.equal(token, tokens[i++]);
             }
-
-            const calls = mock.getGenerateCalls();
-            assert.equal(calls.length, 1);
-            assert.deepEqual(calls[0], {
-                model: 'model1',
-                context,
-                query,
-                stream: true
-            });
-            assert.deepEqual(received, tokens);
+            assert.equal(i, tokens.length, 'All tokens should be processed');
         });
     });
 
