@@ -68,6 +68,14 @@ export class VectorStore {
     }
 
     /**
+     * delete will remove a document and its vectors from the store
+     */
+    delete(id) {
+        this.#cache.delete(id);
+        queueMicrotask(() => this.#saveToStorage());
+    }
+
+    /**
      * clear will remove all document vectors from the store
      */
     clear() {

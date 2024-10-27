@@ -100,6 +100,14 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
                     store.clear();
                 },
                 expectSize: 0
+            },
+            {
+                name: 'deletes document from storage',
+                operation: store => {
+                    store.add({id: 'doc1', vectors: [[1, 2, 3]]});
+                    store.delete('doc1');
+                },
+                expectSize: 0
             }
         ];
 

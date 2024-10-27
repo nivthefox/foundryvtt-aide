@@ -14,3 +14,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for DeepInfra
 - Added a placeholder README.
 - Added jsmock for mocking in tests.
+- Added a document manager to manage operations on documents.

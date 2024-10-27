@@ -16,9 +16,8 @@
 
 /**
  * @typedef {Object} ContextDocument
- * @property {string} id
+ * @property {string} uuid
  * @property {string} content
- * @property {string} title
  */
 
 /**
@@ -29,6 +28,25 @@
  * @typedef {Object} EmbeddingDocument
  * @property {string} id
  * @property {Vector[]} vectors
+ */
+
+/**
+ * @typedef {Object} JournalEntryPage
+ * @property {{
+ *     content: string,
+ *     format: number,
+ *     markdown: string | undefined,
+ * }} text
+ * @property {string} name
+ * @property {string} type
+ * @property {string} uuid
+ */
+
+/**
+ * @typedef {Object} ManagerConfiguration
+ * @property {number} ChunkSize
+ * @property {number} ChunkOverlap
+ * @property {string} EmbeddingModel
  */
 
 /**

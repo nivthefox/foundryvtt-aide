@@ -8,9 +8,6 @@
  *   #recorder;
  *
  *   constructor(ctrl) {
- *     if (!(ctrl instanceof jsmock.MockController)) {
- *       throw new Error("ctrl must be an instance of jsmock.MockController");
- *     }
  *     this.#ctrl = ctrl;
  *     this.#recorder = new MockFibonacciRecorder(this);
  *   }
@@ -40,10 +37,7 @@
  *   #mock;
  *
  *   constructor(ctrl, mock) {
- *     if (!(ctrl instanceof jsmock.MockController)) {
- *       throw new Error("ctrl must be an instance of jsmock.MockController");
- *     }
- *     if (!(mock instanceof MockFibonacci) {
+ *     if (!(mock instanceof MockFibonacci)) {
  *       throw new Error("mock must be an instance of MockFibonacci");
  *     }
  *     this.#ctrl = ctrl;
@@ -95,17 +89,7 @@ class MockController {
      * @param {TestHarness} t
      */
     constructor(t) {
-        t.afterEach(() => {
-            this.finish();
-
-            if (!this.#finished) {
-                for (const call of this.#expectedCalls) {
-                    if (!call.satisfied()) {
-                        throw new UnsatisfiedCallError(call.method, call.args);
-                    }
-                }
-            }
-        });
+        t.afterEach(() => this.finish());
     }
 
     /**
@@ -122,8 +106,8 @@ class MockController {
             throw new UnexpectedCallError(method, args);
         }
 
-        if (expectedCall.satisfied()) {
-            throw new AlreadySatisfiedCallError(method, args);
+        if (expectedCall.exhausted()) {
+            throw new ExhaustedCallError(method, args);
         }
 
         return expectedCall.execute(args);
@@ -143,8 +127,8 @@ class MockController {
             throw new UnexpectedCallError(method, args);
         }
 
-        if (expectedCall.satisfied()) {
-            throw new AlreadySatisfiedCallError(method, args);
+        if (expectedCall.exhausted()) {
+            throw new ExhaustedCallError(method, args);
         }
 
         return await expectedCall.executeAsync(args);
@@ -170,7 +154,7 @@ class MockController {
     }
 
     /**
-     * recordCallWithSignature is called by a mock. It should not be called by user code.
+     * recordCall is called by a mock. It should not be called by user code.
      * @param {Mock} receiver
      * @param {string} method
      * @param {Array<any>} args
@@ -183,6 +167,20 @@ class MockController {
         }
 
         const call = new Call(receiver, method, ...args);
+        this.#expectedCalls.push(call);
+        return call;
+    }
+
+    /**
+     * recordPropertyCall is called by a mock. It should not be called by user code.
+     */
+    recordPropertyCall(receiver, property) {
+        const recv = Reflect.getPrototypeOf(receiver);
+        if (recv.__lookupGetter__(property) === undefined) {
+            throw new MethodNotFoundError(property);
+        }
+
+        const call = new Call(receiver, property);
         this.#expectedCalls.push(call);
         return call;
     }
@@ -349,6 +347,7 @@ class Call {
                 returnValue = ret;
             }
         }
+
         return returnValue;
     }
 
@@ -382,6 +381,18 @@ class Call {
     satisfied() {
         return this.#numCalls >= this.#minCalls && this.#numCalls <= this.#maxCalls;
     }
+
+    /**
+     * exhausted checks if the expected call has been exhausted.
+     * @returns {boolean}
+     */
+    exhausted() {
+        return this.#numCalls >= this.#maxCalls;
+    }
+
+    /**
+     *
+     */
 
     /**
      * Validates if this expectation matches the actual call
@@ -430,10 +441,10 @@ class MockError extends Error {
     }
 }
 
-class AlreadySatisfiedCallError extends MockError {
+class ExhaustedCallError extends MockError {
     constructor(method, args) {
-        super(`Call to ${method} with arguments ${JSON.stringify(args)} has already been satisfied`);
-        this.name = "AlreadySatisfiedCallError";
+        super(`Call to ${method} with arguments ${JSON.stringify(args)} has already been exhausted`);
+        this.name = "ExhaustedCallError";
     }
 }
 
@@ -453,7 +464,7 @@ class UnexpectedCallError extends MockError {
 
 class UnsatisfiedCallError extends MockError {
     constructor(method, args) {
-        super(`Call to ${method} with arguments ${JSON.stringify(args)} does not satisfy the expected call`);
+        super(`Call to ${method} with arguments ${JSON.stringify(args)} was not satisfied`);
         this.name = "UnsatisfiedCallError";
     }
 }
@@ -463,7 +474,7 @@ const jsmock = {
 
     MockController,
     MockError,
-    AlreadySatisfiedCallError,
+    ExhaustedCallError,
     MethodNotFoundError,
     UnexpectedCallError,
     UnsatisfiedCallError

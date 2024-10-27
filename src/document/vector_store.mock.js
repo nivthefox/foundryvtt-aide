@@ -26,6 +26,10 @@ export class MockVectorStore {
         return this.#ctrl.call(this, "clear");
     }
 
+    delete(id) {
+        return this.#ctrl.call(this, "delete", id);
+    }
+
     findSimilar(queryVectors) {
         return this.#ctrl.call(this, "findSimilar", queryVectors);
     }
@@ -61,6 +65,10 @@ export class MockVectorStoreRecorder {
 
     clear() {
         return this.#ctrl.recordCall(this.#mock, "clear");
+    }
+
+    delete(id) {
+        return this.#ctrl.recordCall(this.#mock, "delete", id);
     }
 
     findSimilar(queryVectors) {
