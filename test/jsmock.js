@@ -162,7 +162,16 @@ class MockController {
      */
     recordCall(receiver, method, ...args) {
         const recv = Reflect.getPrototypeOf(receiver);
-        if (typeof recv[method] !== 'function') {
+
+        if (method.split('.').length > 1) {
+            const path = method.split('.');
+            const last = path.pop();
+            const obj = path.reduce((acc, key) => acc[key], receiver);
+            if (typeof obj[last] !== 'function') {
+                throw new MethodNotFoundError(method);
+            }
+        }
+        else if (typeof recv[method] !== 'function') {
             throw new MethodNotFoundError(method);
         }
 

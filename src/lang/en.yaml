@@ -1,2 +1,43 @@
 aide:
   author: nivthefox <nivthefox@writh.net>
+
+  settings:
+    ChatAPIKey:
+      name: Chat API Key
+      hint: The API key for the chat service you want to use.
+    ChatBaseURL:
+      name: Chat Base URL
+      hint: The base URL for the chat service you want to use.
+    ChatModel:
+      name: Chat Model
+      hint: The model to use for your chat generation requests.
+    ChatProvider:
+      name: Chat Provider
+      hint: The provider to use for your chat generation requests.
+    ChunkSize:
+      name: Chunk Size
+      hint: The maximum token size for embedding documents.
+    ChunkOverlap:
+      name: Chunk Overlap
+      hint: The number of tokens to overlap between chunks.
+    EmbeddingAPIKey:
+      name: Embedding API Key
+      hint: The API key for the embedding service you want to use.
+    EmbeddingBaseURL:
+      name: Embedding Base URL
+      hint: The base URL for the embedding service you want to use.
+    EmbeddingModel:
+      name: Embedding Model
+      hint: The model to use for your embedding requests.
+    EmbeddingProvider:
+      name: Embedding Provider
+      hint: The provider to use for your embedding requests.
+    VectorStoreLookups:
+      name: Vector Store Lookups
+      hint: The number of documents to return for each vector store lookup.
+    VectorStoreMaxWeight:
+      name: Vector Store Max Weight
+      hint: Balance between best chunk match (1.0) and average matches (0.0). Higher values favor single strong matches.
+    VectorStoreQueryBoostFactor:
+      name: Vector Store Query Boost Factor
+      hint: Boost factor for shorter text matches. Higher values give more weight to shorter but highly relevant matches.

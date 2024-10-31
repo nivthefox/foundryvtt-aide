@@ -1,0 +1,100 @@
+{
+  "ChatAPIKey": {
+    "type": "String",
+    "default": "",
+    "scope": "client"
+  },
+  "ChatBaseURL": {
+    "type": "String",
+    "default": "",
+    "scope": "client"
+  },
+  "ChatModel": {
+    "type": "String",
+    "default": "",
+    "scope": "client"
+  },
+  "ChatProvider": {
+    "type": "String",
+    "default": "",
+    "scope": "client",
+    "choices": {
+      "openai": "OpenAI",
+      "deepinfra": "DeepInfra"
+    }
+  },
+  "ChunkSize": {
+    "type": "Number",
+    "default": 512,
+    "scope": "client",
+    "range": {
+      "min": 128,
+      "max": 2048,
+      "step": 128
+    }
+  },
+  "ChunkOverlap": {
+    "type": "Number",
+    "default": 32,
+    "scope": "client",
+    "range": {
+      "min": 0,
+      "max": 256,
+      "step": 16
+    }
+  },
+  "EmbeddingAPIKey": {
+    "type": "String",
+    "default": "",
+    "scope": "client"
+  },
+  "EmbeddingBaseURL": {
+    "type": "String",
+    "default": "",
+    "scope": "client"
+  },
+  "EmbeddingModel": {
+    "type": "String",
+    "default": "",
+    "scope": "client"
+  },
+  "EmbeddingProvider": {
+    "type": "String",
+    "default": "",
+    "scope": "client",
+    "choices": {
+      "openai": "OpenAI",
+      "deepinfra": "DeepInfra"
+    }
+  },
+  "VectorStoreLookups": {
+    "type": "Number",
+    "default": 3,
+    "scope": "client",
+    "range": {
+      "min": 1,
+      "max": 10,
+      "step": 1
+    }
+  },
+  "VectorStoreMaxWeight": {
+    "type": "Number",
+    "default": 0.7,
+    "scope": "client",
+    "range": {
+      "min": 0,
+      "max": 1,
+      "step": 0.1
+    }
+  },
+  "VectorStoreQueryBoostFactor": {
+    "type": "Number",
+    "default": 1.2,
+    "scope": "client",
+    "range": {
+      "min": 1,
+      "max": 2,
+      "step": 0.1
+    }
+  }
+}

@@ -15,12 +15,25 @@ export class MockFoundry {
         return await this.ctrl.callAsync(this, "fromUuid", id);
     }
 
+    get foundry() {
+        return this.ctrl.call(this, "foundry");
+    }
 
     get game() {
         const self = this;
         return {
             get journal() {
                 return self.gameJournal;
+            },
+            get settings() {
+                return {
+                    get(namespace, key) {
+                        return self.ctrl.call(self, "game.settings.get", namespace, key);
+                    },
+                    register(namespace, key, data) {
+                        return self.ctrl.call(self, "game.settings.register", namespace, key, data);
+                    }
+                }
             }
         }
     }
@@ -30,10 +43,6 @@ export class MockFoundry {
     }
 }
 
-/**
- * MockFoundryRecorder records expectations for the MockFoundry
- * @implements {MockRecorder}
- */
 export class MockFoundryRecorder {
     ctrl;
     mock;
@@ -50,6 +59,10 @@ export class MockFoundryRecorder {
         return this.ctrl.recordCall(this.mock, "fromUuid", id);
     }
 
+    get foundry() {
+        return this.ctrl.recordPropertyCall(this.mock, "foundry");
+    }
+
     get game() {
         const ctrl = this.ctrl;
         const mock = this.mock;
@@ -57,8 +70,17 @@ export class MockFoundryRecorder {
         return {
             get journal() {
                 return ctrl.recordPropertyCall(mock, "gameJournal");
+            },
+            get settings() {
+                return {
+                    get(namespace, key) {
+                        return ctrl.recordCall(mock, "game.settings.get", namespace, key);
+                    },
+                    register(namespace, key, data) {
+                        return ctrl.recordCall(mock, "game.settings.register", namespace, key, data);
+                    }
+                }
             }
         }
     }
 }
-

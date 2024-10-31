@@ -28,7 +28,7 @@ export class Manager {
         ChunkSize: 512,
         ChunkOverlap: 32,
         EmbeddingModel: '',
-    }
+    };
 
     /**
      * @type {VectorStore}

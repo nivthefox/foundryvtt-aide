@@ -81,7 +81,7 @@
     "no-unsafe-optional-chaining": ["warn", {"disallowArithmeticOperators":  true}],
     "no-unused-expressions": "warn",
     "no-useless-backreference": "warn",
-    "no-useless-call": "warn",
+    "no-useless-call": "off",
     "no-useless-catch": "warn",
     "no-useless-computed-key": ["warn", {"enforceForClassMembers": true}],
     "no-useless-concat": "warn",

@@ -1,4 +1,5 @@
 import {Logger, LogLevels} from './logger';
+import {Settings} from '../settings/settings';
 
 export class App {
     id;
@@ -13,7 +14,10 @@ export class App {
         this.name = title;
         this.version = version;
 
+        const context = window;
+
         this.logger = Logger.getLogger(this.name, LogLevels.Debug);
+        this.settings = new Settings(context, this.id);
     }
 
     async ready() {
@@ -21,5 +25,6 @@ export class App {
     }
 
     async setup() {
+        this.settings.registerSettings();
     }
 }

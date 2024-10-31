@@ -56,7 +56,7 @@ export default function ManagerTest(quench) {
 
     describe('document chunking', () => {
         it('chunks document content with overlap', async () => {
-            const content = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam feugiat condimentum ultricies. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec ornare lacus orci. Pellentesque purus enim, cursus eget condimentum sit amet, feugiat vitae sem. In condimentum odio nisi, eget luctus felis efficitur ut. Duis ultrices ligula eros, sed placerat leo pharetra id. Nulla eu erat quis ligula bibendum cursus. Duis nulla urna, dapibus quis condimentum nec, viverra sit amet dui. Praesent mollis odio ipsum, eget fringilla justo fringilla nec.`;
+            const content = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam feugiat condimentum ultricies. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec ornare lacus orci. Pellentesque purus enim, cursus eget condimentum sit amet, feugiat vitae sem. In condimentum odio nisi, eget luctus felis efficitur ut. Duis ultrices ligula eros, sed placerat leo pharetra id. Nulla eu erat quis ligula bibendum cursus. Duis nulla urna, dapibus quis condimentum nec, viverra sit amet dui. Praesent mollis odio ipsum, eget fringilla justo fringilla nec.';
 
             const mockDoc = {
                 type: 'text',
@@ -70,8 +70,8 @@ export default function ManagerTest(quench) {
 
             const chunks = await manager.chunks('test-id');
             assert(chunks.length > 0);
-            assert.equal(chunks[0], "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam feugiat condimentum ultricies. Class ");
-            assert.equal(chunks[1], "Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec ");
+            assert.equal(chunks[0], 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam feugiat condimentum ultricies. Class ');
+            assert.equal(chunks[1], 'Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec ');
         });
 
         it('handles empty documents', async () => {
@@ -189,7 +189,7 @@ export default function ManagerTest(quench) {
             docs.set('Doc2', {pages: pages2});
 
             mockFoundry.EXPECT().game.journal.Return(docs).AnyTimes();
-            mockFoundry.EXPECT().fromUuid(jsmock.AnyString).DoAndReturn((id) => {
+            mockFoundry.EXPECT().fromUuid(jsmock.AnyString).DoAndReturn(id => {
                 const [doc, page] = id.split('.');
                 return docs.get(doc)?.pages.get(page);
             }).Times(3);
@@ -239,8 +239,6 @@ export default function ManagerTest(quench) {
                     format: 1,
                 }
             };
-
-
 
             mockAI.EXPECT().embed('test-model', 'test-id', ['New content']).Return({
                 id: 'test-id',
