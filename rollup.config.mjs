@@ -46,23 +46,12 @@ const sharedConfig = {
 const createCommonPlugins = (isProduction) => [
     json({
         preferConst: true,
-        compact: isProduction
+        compact: false
     }),
     nodeResolve({
         browser: true,
         preferBuiltins: false
     }),
-    isProduction && terser({
-        format: {
-            comments: function(node, comment) {
-                if (comment.type === "comment2") {
-                    // Preserve license comments
-                    return /@preserve|@license|@cc_on|Copyright/i.test(comment.value);
-                }
-                return false;
-            }
-        }
-    })
 ].filter(Boolean);
 
 // Production flag
@@ -73,11 +62,11 @@ const main = {
     ...sharedConfig,
     input: 'src/main.js',
     output: {
-        file: `dist/aide${isProduction ? '.min' : ''}.js`,
+        file: `dist/aide.js`,
         format: 'es',
-        sourcemap: !isProduction,
+        sourcemap: true,
         banner,
-        compact: isProduction
+        compact: false
     },
     plugins: [
         ...createCommonPlugins(isProduction),
@@ -111,11 +100,11 @@ const tests = {
     ...sharedConfig,
     input: 'src/**/*.test.js',
     output: {
-        file: `dist/aide.test${isProduction ? '.min' : ''}.js`,
+        file: `dist/aide.test.js`,
         format: 'es',
         sourcemap: true,
         banner,
-        compact: false // Never compact test code
+        compact: false
     },
     plugins: [
         match({
@@ -125,7 +114,7 @@ const tests = {
         combine({
             // Add combine options if needed
         }),
-        ...createCommonPlugins(false) // Never minify test code
+        ...createCommonPlugins(isProduction)
     ]
 };
 
