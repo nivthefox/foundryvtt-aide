@@ -2,7 +2,7 @@
  * STORAGE_KEY is a unique identifier for the location in local storage
  * @type {string}
  */
-const STORAGE_KEY = 'foundryvtt.aide.vectors';
+export const STORAGE_KEY = 'foundryvtt.aide.vectors';
 
 /**
  * STORAGE_FORMAT_VERSION is a version number for the storage format

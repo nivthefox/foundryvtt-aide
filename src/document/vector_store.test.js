@@ -1,16 +1,16 @@
 import { Suite } from '../../test/quench';
-import { VectorStore } from './vector_store';
+import { STORAGE_KEY, VectorStore } from './vector_store';
 
 Suite('document.vector_store', VectorStoreTest);
 export default function VectorStoreTest({describe, it, assert, beforeEach, afterEach}) {
     let store = null;
     beforeEach(() => {
-        localStorage.clear();
+        localStorage.removeItem(STORAGE_KEY);
         store = new VectorStore();
     });
 
     afterEach(() => {
-        localStorage.clear();
+        localStorage.removeItem(STORAGE_KEY);
         store = null;
     });
 
