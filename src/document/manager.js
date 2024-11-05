@@ -1,5 +1,5 @@
 /**
- * Manager encapsulates document-related operations
+ * DocumentManager encapsulates document-related operations
  *
  * @description
  * This includes retrieval, chunking, and vector store management. It handles
@@ -20,7 +20,7 @@
  * await manager.rebuildVectorStore();
  * ```
  */
-export class Manager {
+export class DocumentManager {
     /**
      * @type {ManagerConfiguration}
      */

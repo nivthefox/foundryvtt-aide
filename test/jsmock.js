@@ -69,6 +69,7 @@ const matchers = {
     AnyFunction: (arg) => typeof arg === 'function',
     AnyAsyncFunction: (arg) => arg instanceof Promise,
     AnyError: (arg) => arg instanceof Error,
+    AnyNull: (arg) => arg === null,
     AnyVoid: (arg) => arg === undefined,
 
     ArrayOf: (matcher) => (arg) => Array.isArray(arg) && arg.every(matcher),

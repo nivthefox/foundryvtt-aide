@@ -1,6 +1,8 @@
 import { Suite } from '../../test/quench';
 import { Settings } from './settings';
-import { MockFoundry } from '../foundry.mock';
+import { MockContext } from '../../test/foundry/context.mock';
+import { MockGame } from '../../test/foundry/game.mock';
+import { MockSettings } from '../../test/foundry/settings.mock';
 import SETTINGS_REGISTRY from './settings.json';
 import jsmock from '../../test/jsmock';
 
@@ -12,18 +14,25 @@ export default function SettingsTest(quench) {
 
     let settings;
     let ctrl;
-    let mockFoundry;
+    let mockContext;
+    let mockGame;
+    let mockSettings;
 
     beforeEach(() => {
         ctrl = new MockController(quench);
-        mockFoundry = new MockFoundry(ctrl);
-        mockFoundry.EXPECT().foundry.AnyTimes().Return(window.foundry);
+        mockContext = new MockContext(ctrl);
+        mockGame = new MockGame(ctrl);
+        mockSettings = new MockSettings(ctrl);
+        mockContext.game = mockGame;
+        mockContext.game.settings = mockSettings;
+
+        mockContext.EXPECT().foundry.AnyTimes().Return(window.foundry);
     });
 
     describe('registration', () => {
         beforeEach(() => {
             Object.entries(SETTINGS_REGISTRY).forEach(([key, defaultSettings]) => {
-                mockFoundry.EXPECT().game.settings.register('test', key, jsmock.AnyObject).Do((module, key, config) => {
+                mockContext.game.settings.EXPECT().register('test', key, jsmock.AnyObject).Do((module, key, config) => {
                     assert.equal(config.name, `test.settings.${key}.name`);
                     assert.equal(config.hint, `test.settings.${key}.hint`);
                     assert.equal(config.scope, defaultSettings.scope);
@@ -34,12 +43,12 @@ export default function SettingsTest(quench) {
                         assert.deepEqual(config.choices, defaultSettings.choices);
                     }
                 });
-                mockFoundry.EXPECT().game.settings.get('test', key).Do((namespace, key) => defaultSettings.default);
+                mockContext.game.settings.EXPECT().get('test', key).Do((namespace, key) => defaultSettings.default);
             });
         });
 
         it('registers all settings from registry', () => {
-            settings = new Settings(mockFoundry, 'test');
+            settings = new Settings(mockContext, 'test');
             settings.registerSettings();
 
             Object.entries(SETTINGS_REGISTRY).forEach(([key, defaultSettings]) => {
@@ -48,7 +57,7 @@ export default function SettingsTest(quench) {
         });
 
         it('changes settings', () => {
-            settings = new Settings(mockFoundry, 'test');
+            settings = new Settings(mockContext, 'test');
             settings.registerSettings();
 
             settings.changeSettings('ChatModel', 'test-model');
@@ -56,7 +65,7 @@ export default function SettingsTest(quench) {
         });
 
         it('throws on invalid setting name', () => {
-            settings = new Settings(mockFoundry, 'test');
+            settings = new Settings(mockContext, 'test');
             settings.registerSettings();
 
             assert.throws(() => {
@@ -68,7 +77,7 @@ export default function SettingsTest(quench) {
     describe('number settings', () => {
         beforeEach(() => {
             Object.entries(SETTINGS_REGISTRY).forEach(([key, defaultSettings]) => {
-                mockFoundry.EXPECT().game.settings.register('test', key, jsmock.AnyObject).Do((module, key, config) => {
+                mockContext.game.settings.EXPECT().register('test', key, jsmock.AnyObject).Do((module, key, config) => {
                     if (defaultSettings.type === 'Number') {
                         assert.ok(config.type instanceof foundry.data.fields.NumberField);
                         assert.deepEqual(config.type.options, {
@@ -79,12 +88,12 @@ export default function SettingsTest(quench) {
                         });
                     }
                 });
-                mockFoundry.EXPECT().game.settings.get('test', key).Return(defaultSettings.default);
+                mockContext.game.settings.EXPECT().get('test', key).Return(defaultSettings.default);
             });
         });
 
         it('configures number fields correctly', () => {
-            settings = new Settings(mockFoundry, 'test');
+            settings = new Settings(mockContext, 'test');
             settings.registerSettings();
         });
     });
@@ -92,18 +101,18 @@ export default function SettingsTest(quench) {
     describe('choice settings', () => {
         beforeEach(() => {
             Object.entries(SETTINGS_REGISTRY).forEach(([key, defaultSettings]) => {
-                mockFoundry.EXPECT().game.settings.register('test', key, jsmock.AnyObject).Do((module, key, config) => {
+                mockContext.game.settings.EXPECT().register('test', key, jsmock.AnyObject).Do((module, key, config) => {
                     if (defaultSettings.choices) {
                         assert.equal(config.type, String);
                         assert.deepEqual(config.choices, defaultSettings.choices);
                     }
                 });
-                mockFoundry.EXPECT().game.settings.get('test', key).Return(defaultSettings.default);
+                mockContext.game.settings.EXPECT().get('test', key).Return(defaultSettings.default);
             });
         });
 
         it('configures choice fields correctly', () => {
-            settings = new Settings(mockFoundry, 'test');
+            settings = new Settings(mockContext, 'test');
             settings.registerSettings();
         });
     });

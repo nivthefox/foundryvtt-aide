@@ -1,34 +1,37 @@
 import { Suite } from '../../test/quench';
-import { Manager } from './manager';
+import { DocumentManager } from './manager';
 import { MockAIProvider } from '../ai/provider/provider.mock';
 import { MockVectorStore } from './vector_store.mock';
-import { MockFoundry } from '../foundry.mock';
+import { MockContext } from '../../test/foundry/context.mock';
+import { MockGame } from '../../test/foundry/game.mock';
 
 import jsmock from '../../test/jsmock';
 const { MockController } = jsmock;
 
-Suite('document.manager', ManagerTest);
-export default function ManagerTest(quench) {
+Suite('document.manager', DocumentManagerTest);
+export default function DocumentManagerTest(quench) {
     const {describe, it, assert, beforeEach} = quench;
 
     let ctrl;
     let mockAI;
     let mockStore;
-    let mockFoundry;
+    let mockContext;
     let manager;
 
     beforeEach(() => {
         ctrl = new MockController(quench);
         mockAI = new MockAIProvider(ctrl);
         mockStore = new MockVectorStore(ctrl);
-        mockFoundry = new MockFoundry(ctrl);
+        mockContext = new MockContext(ctrl);
+        const mockGame = new MockGame(ctrl);
+        mockContext.game = mockGame;
 
         const managerOptions = {
             ChunkSize: 32,
             ChunkOverlap: 2,
             EmbeddingModel: 'test-model'
         };
-        manager = new Manager(mockFoundry, managerOptions, mockAI, mockStore);
+        manager = new DocumentManager(mockContext, managerOptions, mockAI, mockStore);
     });
 
     describe('document retrieval', () => {
@@ -41,14 +44,14 @@ export default function ManagerTest(quench) {
                     format: 1,
                 }
             };
-            mockFoundry.EXPECT().fromUuid('test-id').Return(mockDoc);
+            mockContext.EXPECT().fromUuid('test-id').Return(mockDoc);
 
             const doc = await manager.getDocument('test-id');
             assert.deepEqual(doc, mockDoc);
         });
 
         it('handles missing documents', async () => {
-            mockFoundry.EXPECT().fromUuid('missing-id').Return(undefined);
+            mockContext.EXPECT().fromUuid('missing-id').Return(undefined);
             const doc = await manager.getDocument('missing-id');
             assert.equal(doc, undefined);
         });
@@ -66,7 +69,7 @@ export default function ManagerTest(quench) {
                 }
             };
 
-            mockFoundry.EXPECT().fromUuid('test-id').Return(mockDoc);
+            mockContext.EXPECT().fromUuid('test-id').Return(mockDoc);
 
             const chunks = await manager.chunks('test-id');
             assert(chunks.length > 0);
@@ -80,7 +83,7 @@ export default function ManagerTest(quench) {
                 text: { content: '' }
             };
 
-            mockFoundry.EXPECT().fromUuid('empty-id').Return(mockDoc);
+            mockContext.EXPECT().fromUuid('empty-id').Return(mockDoc);
             const chunks = await manager.chunks('empty-id');
             assert.deepEqual(chunks, []);
         });
@@ -109,8 +112,8 @@ export default function ManagerTest(quench) {
                 }
             ];
 
-            mockFoundry.EXPECT().fromUuid('doc1').Return(docs[0]);
-            mockFoundry.EXPECT().fromUuid('doc2').Return(docs[1]);
+            mockContext.EXPECT().fromUuid('doc1').Return(docs[0]);
+            mockContext.EXPECT().fromUuid('doc2').Return(docs[1]);
 
             const contexts = await manager.contexts(['doc1', 'doc2']);
             assert.equal(contexts.length, 2);
@@ -137,8 +140,8 @@ export default function ManagerTest(quench) {
                 }
             ];
 
-            mockFoundry.EXPECT().fromUuid('doc1').Return(docs[0]);
-            mockFoundry.EXPECT().fromUuid('doc2').Return(docs[1]);
+            mockContext.EXPECT().fromUuid('doc1').Return(docs[0]);
+            mockContext.EXPECT().fromUuid('doc2').Return(docs[1]);
 
             const contexts = await manager.contexts(['doc1', 'doc2']);
             assert.equal(contexts.length, 1);
@@ -188,7 +191,7 @@ export default function ManagerTest(quench) {
             docs.set('Doc1', {pages: pages1});
             docs.set('Doc2', {pages: pages2});
 
-            mockFoundry.EXPECT().game.journal.Return(docs).AnyTimes();
+            mockFoundry.game.EXPECT().journal.Return(docs).AnyTimes();
             mockFoundry.EXPECT().fromUuid(jsmock.AnyString).DoAndReturn(id => {
                 const [doc, page] = id.split('.');
                 return docs.get(doc)?.pages.get(page);

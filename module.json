@@ -4,34 +4,37 @@
     "description": "An AI discussion environment (AIde) to help you craft your next adventure",
     "version": "0.1.1",
     "authors": [
-      {
-        "name": "nivthefox",
-        "discord": "nivthefox"
-      }
+        {
+            "name": "nivthefox",
+            "discord": "nivthefox"
+        }
     ],
     "compatibility": {
-      "minimum":  "12",
-      "verified": "12"
+        "minimum":  "12",
+        "verified": "12"
     },
     "relationships": {
-      "systems": []
+        "systems": []
     },
     "esmodules": [
-      "./dist/aide.js",
-      "./dist/aide.test.js"
+        "./dist/aide.js",
+        "./dist/aide.test.js"
+    ],
+    "styles": [
+        "./dist/aide.css"
     ],
     "languages": [
-      {
-        "lang": "en",
-        "name": "English",
-        "path": "dist/lang/en.json"
-      }
+        {
+            "lang": "en",
+            "name": "English",
+            "path": "dist/lang/en.json"
+        }
     ],
-    "url":		"https://github.com/nivthefox/foundryvtt-aide",
-    "license":	"https://github.com/nivthefox/foundryvtt-aide/LICENSE",
-    "manifest":	"https://github.com/nivthefox/foundryvtt-aide/bundle/module.json",
-    "download":	"https://github.com/nivthefox/foundryvtt-aide/bundle/foundryvtt-aide.zip",
-    "readme":	    "https://github.com/nivthefox/foundryvtt-aide/README.md",
+    "url":        "https://github.com/nivthefox/foundryvtt-aide",
+    "license":	  "https://github.com/nivthefox/foundryvtt-aide/LICENSE",
+    "manifest":	  "https://github.com/nivthefox/foundryvtt-aide/bundle/module.json",
+    "download":	  "https://github.com/nivthefox/foundryvtt-aide/bundle/foundryvtt-aide.zip",
+    "readme":	  "https://github.com/nivthefox/foundryvtt-aide/README.md",
     "changelog":  "https://github.com/nivthefox/foundryvtt-aide/CHANGELOG.md"
   }
   

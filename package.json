@@ -1,29 +1,52 @@
 {
+    "types": "src/types.js",
+    "scripts": {
+        "build": "npm run lint:code && npm run build:code && npm run build:styles",
+        "build:code": "npx rollup --config rollup.config.mjs",
+        "build:styles": "sass src/styles/aide.scss:dist/aide.css --style compressed",
+        "lint": "npm run lint:code",
+        "lint:code": "npx eslint -c .eslintrc.json src/*/**.js",
+        "watch": "npm-run-all --parallel watch:*",
+        "watch:code": "npm-watch build:code",
+        "watch:styles": "npm-watch build:styles",
+        "watch:lint": "npm-watch lint:code"
+    },
     "watch": {
         "build:code": {
             "patterns": [
-                "src/**.js",
-                "src/**.yaml"
+                "src/",
+                "src/**/",
+                "src/**/",
+                "test/",
+                "test/**/"
             ],
-            "quiet": true,
-            "silent": true
+            "extensions": ["js", "json", "yaml"],
+            "quiet": false,
+            "silent": false,
+            "inherit": true
+        },
+        "build:styles": {
+            "patterns": [
+                "src/styles/"
+            ],
+            "extensions": ["scss"],
+            "quiet": false,
+            "silent": false,
+            "inherit": true
         },
         "lint:code": {
             "patterns": [
-                "src/**.js"
+                "src/",
+                "src/**/",
+                "src/**/",
+                "test/",
+                "test/**/"
             ],
-            "quiet": true,
-            "silent": true
+            "extensions": ["js", "json", "yaml"],
+            "quiet": false,
+            "silent": false,
+            "inherit": true
         }
-    },
-    "types": "src/types.js",
-    "scripts": {
-        "build": "npm run lint:code && npm run build:code",
-        "build:code": "npx rollup --config rollup.config.mjs",
-        "lint": "npm run lint:code",
-        "lint:code": "npx eslint -c .eslintrc.json src/*/**.js",
-        "watch:build:code": "npx rollup --config rollup.config.mjs --watch",
-        "watch:lint:code": "npm-watch lint:code"
     },
     "devDependencies": {
         "@rollup/plugin-alias": "^5.1.0",
@@ -32,11 +55,13 @@
         "eslint": "^8.57.0",
         "fancy-log": "^2.0.0",
         "js-yaml": "^4.1.0",
+        "npm-run-all": "^4.1.5",
         "npm-watch": "^0.13.0",
         "rollup": "^4.20.0",
         "rollup-plugin-combine": "^2.1.1",
         "rollup-plugin-copy": "^3.5.0",
-        "rollup-plugin-match": "^1.0.0"
+        "rollup-plugin-match": "^1.0.0",
+        "sass": "^1.80.5"
     },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "^4.21.0"
