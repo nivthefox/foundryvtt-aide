@@ -1,8 +1,8 @@
 import { Suite } from '../../test/quench';
 import { Settings } from './settings';
-import { MockContext } from '../../test/foundry/context.mock';
-import { MockGame } from '../../test/foundry/game.mock';
-import { MockSettings } from '../../test/foundry/settings.mock';
+import { MockContext } from '../foundry/context.mock';
+import { MockGame } from '../foundry/game.mock';
+import { MockSettings } from '../foundry/settings.mock';
 import SETTINGS_REGISTRY from './settings.json';
 import jsmock from '../../test/jsmock';
 
@@ -26,7 +26,7 @@ export default function SettingsTest(quench) {
         mockContext.game = mockGame;
         mockContext.game.settings = mockSettings;
 
-        mockContext.EXPECT().foundry.AnyTimes().Return(window.foundry);
+        mockContext.EXPECT().foundry.Return(window.foundry).AnyTimes();
     });
 
     describe('registration', () => {

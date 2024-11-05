@@ -17,7 +17,44 @@
 /**
  * @typedef {Object} ContextDocument
  * @property {string} uuid
+ * @property {string} [content]
+ */
+
+/**
+ * @typedef {Object} Conversation
+ * @property {string} id
+ * @property {string} userId
+ * @property {string} [title]
+ * @property {ConversationMessage[]} [messages]
+ * @property {ContextDocument[]} [context]
+ */
+
+/**
+ * @typedef {Object} ConversationContextDocument
+ * @property {string} id
+ * @property {string} name
+ * @property {boolean} addedByUser
+ * @property {boolean} removedByUser
+ */
+
+/**
+ * @typedef {Object} ConversationMessage
+ * @property {ConversationMessageUser} user
+ * @property {boolean} isUserMessage
  * @property {string} content
+ * @property {ConversationMessageTime} time
+ */
+
+/**
+ * @typedef {Object} ConversationMessageUser
+ * @property {string} name
+ * @property {string} type
+ */
+
+/**
+ * @typedef {Object} ConversationMessageTime
+ * @property {string} display
+ * @property {number} timestamp
  */
 
 /**

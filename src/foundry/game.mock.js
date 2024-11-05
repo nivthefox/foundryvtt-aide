@@ -14,6 +14,14 @@ export class MockGame {
     get journal() {
         return this.#ctrl.call(this, 'journal');
     }
+
+    get socket() {
+        return this.#ctrl.call(this, 'socket');
+    }
+
+    get world() {
+        return this.#ctrl.call(this, 'world');
+    }
 }
 
 export class MockGameRecorder {
@@ -22,7 +30,7 @@ export class MockGameRecorder {
 
     constructor(ctrl, mock) {
         if (!(mock instanceof MockGame)) {
-            throw new Error("mock must be an instance of MockGame");
+            throw new Error('mock must be an instance of MockGame');
         }
         this.#ctrl = ctrl;
         this.#mock = mock;
@@ -30,5 +38,13 @@ export class MockGameRecorder {
 
     get journal() {
         return this.#ctrl.recordPropertyCall(this.#mock, 'journal');
+    }
+
+    get socket() {
+        return this.#ctrl.recordPropertyCall(this.#mock, 'socket');
+    }
+
+    get world() {
+        return this.#ctrl.recordPropertyCall(this.#mock, 'world');
     }
 }

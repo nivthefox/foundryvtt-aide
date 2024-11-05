@@ -4,14 +4,9 @@ import { VectorStore } from './vector_store';
 Suite('document.vector_store', VectorStoreTest);
 export default function VectorStoreTest({describe, it, assert, beforeEach, afterEach}) {
     let store = null;
-    const mockLogger = {
-        debug: () => {},
-        error: () => {}
-    };
-
     beforeEach(() => {
         localStorage.clear();
-        store = new VectorStore(mockLogger);
+        store = new VectorStore();
     });
 
     afterEach(() => {
@@ -117,7 +112,7 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
                 await new Promise(resolve => {
                     setTimeout(resolve, 0);
                 });
-                const newStore = new VectorStore(mockLogger);
+                const newStore = new VectorStore();
                 assert.equal(newStore.size(), expectSize);
             });
         });
@@ -161,12 +156,7 @@ export default function VectorStoreTest({describe, it, assert, beforeEach, after
 
         searchTests.forEach(({name, query, expectFirst, expectLength, lookups, queryBoostFactor}) => {
             it(name, () => {
-                const testStore = new VectorStore(
-                    mockLogger,
-                    lookups || 3,
-                    0.7,
-                    queryBoostFactor
-                );
+                const testStore = new VectorStore(lookups || 3, 0.7, queryBoostFactor);
                 testStore.addBatch(documents);
 
                 const results = testStore.findSimilar(query);

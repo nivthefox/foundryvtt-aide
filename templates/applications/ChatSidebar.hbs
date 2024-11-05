@@ -1,0 +1,16 @@
+<aside>
+    <ul>
+    {{#each . as | chat | }}
+        <li class="{{#if active}}active{{/if}}">
+            <a href="{{ chat.url }}">
+                {{ chat.title }}
+                <span>({{ chat.messages }})</span>
+            </a>
+        </li>
+    {{/each}}
+    </ul>
+    <button>
+        <i class="fa fa-comment"></i>
+        <span>New Conversation</span>
+    </button>
+</aside>

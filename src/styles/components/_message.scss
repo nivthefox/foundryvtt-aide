@@ -1,0 +1,70 @@
+@use '../variables' as *;
+
+@mixin styles {
+    .message {
+        margin: 0 1rem 1rem;
+
+        header {
+            display: flex;
+            font-style: italic;
+            font-size: 0.75rem;
+            padding: 0.2rem;
+
+            time {
+                margin-left: auto;
+            }
+        }
+
+        .content {
+            border: 1px solid hsla(var(--content-border) / 0.25);
+            border-radius: $message-border-radius;
+            padding: $message-padding;
+            position: relative;
+            width: 100%;
+        }
+
+        &.user .content {
+            background: linear-gradient(
+                    hsla(var(--user-content) / 0.55),
+                    hsla(var(--user-content) / 0.45)
+            );
+        }
+
+        &.assistant .content {
+            background: linear-gradient(
+                    hsla(var(--assistant-content) / 0.20),
+                    hsla(var(--assistant-content) / 0.10)
+            );
+        }
+
+        nav {
+            line-height: 2rem;
+            position: absolute;
+            right: 0.5rem;
+            top: 0;
+            z-index: 1;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity $transition-standard;
+
+            button {
+                border: none;
+                background: none;
+                display: inline-block;
+                height: 2rem;
+                width: 1.5rem;
+
+                &:hover {
+                    box-shadow: none;
+                }
+            }
+        }
+
+        &:hover {
+            nav {
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+    }
+}

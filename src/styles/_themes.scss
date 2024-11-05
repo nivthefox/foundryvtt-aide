@@ -1,0 +1,16 @@
+@use 'variables' as *;
+
+:root {
+    --chat-background: #{$chat-background};
+    --user-content: #{$user-content};
+    --assistant-content: #{$assistant-content};
+    --placeholder-text: #{$placeholder-text};
+    --content-border: #{$content-border};
+
+    .theme-dark {
+        --chat-background: 210 12% 13%;
+        --user-content: 0 0% 0%;
+        --assistant-content: 220 80% 45%;
+        --placeholder-text: 0 0% 100%;
+    }
+}

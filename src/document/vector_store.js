@@ -28,13 +28,11 @@ export class VectorStore {
     #dimension = 0;
 
     /**
-     * @param {{debug: Function, error: Function}} logger
      * @param {number} [lookups=3]
      * @param {number} [maxWeight=0.7]
      * @param {number} [queryBoostFactor=1.2]
      */
-    constructor(logger, lookups = 3, maxWeight = 0.7, queryBoostFactor = 1.2) {
-        this.logger = logger;
+    constructor(lookups = 3, maxWeight = 0.7, queryBoostFactor = 1.2) {
         this.lookups = lookups;
         this.maxWeight = maxWeight;
         this.queryBoostFactor = queryBoostFactor;
@@ -106,9 +104,7 @@ export class VectorStore {
                     const avgSim = similarities.reduce((sum, curr) =>
                         sum + curr.similarity, 0) / similarities.length;
 
-                    const score = (maxSim.similarity * this.maxWeight) + (avgSim * avgWeight);
-                    console.log(`Scores for ${id}:`, {queryVector, similarities, maxSim, avgSim, score});
-                    return score;
+                    return (maxSim.similarity * this.maxWeight) + (avgSim * avgWeight);
                 });
 
                 // Take the maximum score across all query vectors
@@ -175,21 +171,22 @@ export class VectorStore {
 
     /**
      * @private
+     * @throws {Error} If there is an error loading from local storage
      */
     #loadFromStorage() {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY) || '{}';
-            const deserialized = JSON.parse(stored);
-            if (deserialized.formatVersion !== undefined && deserialized.formatVersion !== STORAGE_FORMAT_VERSION) {
-                this.logger.debug('found vector version mismatch');
-                this.#migrate(deserialized);
-            }
+        const stored = localStorage.getItem(STORAGE_KEY) || '{}';
+        const deserialized = JSON.parse(stored);
 
-            for (const [key, value] of Object.entries(deserialized.entries)) {
-                this.#cache.set(key, value);
-            }
-        } catch (error) {
-            this.logger.error('error loading vectors from storage', error);
+        if (deserialized.formatVersion !== undefined && deserialized.formatVersion !== STORAGE_FORMAT_VERSION) {
+            this.#migrate(deserialized);
+        }
+
+        if (!deserialized.entries) {
+            return;
+        }
+
+        for (const [key, value] of Object.entries(deserialized.entries)) {
+            this.#cache.set(key, value);
         }
     }
 
@@ -203,19 +200,16 @@ export class VectorStore {
 
     /**
      * @private
+     * @throws {Error} If there is an error saving to local storage
      */
     #saveToStorage() {
-        try {
-            const data = {
-                formatVersion: STORAGE_FORMAT_VERSION,
-                entries: Object.fromEntries(this.#cache.entries())
-            };
+        const data = {
+            formatVersion: STORAGE_FORMAT_VERSION,
+            entries: Object.fromEntries(this.#cache.entries())
+        };
 
-            const serialized = JSON.stringify(data);
-            localStorage.setItem(STORAGE_KEY, serialized);
-        } catch (error) {
-            this.logger.error('error saving vectors to storage', error);
-        }
+        const serialized = JSON.stringify(data);
+        localStorage.setItem(STORAGE_KEY, serialized);
     }
 
     /**

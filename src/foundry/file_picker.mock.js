@@ -25,15 +25,15 @@ export class MockFilePicker {
     }
 
     async browse(source, path) {
-        return await this.#ctrl.callAsync(this, "browse", source, path);
+        return await this.#ctrl.callAsync(this, 'browse', source, path);
     }
 
     async createDirectory(source, path, options = {}) {
-        return await this.#ctrl.callAsync(this, "createDirectory", source, path, options);
+        return await this.#ctrl.callAsync(this, 'createDirectory', source, path, options);
     }
 
     async upload(source, path, file, options = {}) {
-        return await this.#ctrl.callAsync(this, "upload", source, path, file, options);
+        return await this.#ctrl.callAsync(this, 'upload', source, path, file, options);
     }
 
     /**
@@ -41,7 +41,7 @@ export class MockFilePicker {
      */
     static set instance(mock) {
         if (!(mock instanceof MockFilePicker)) {
-            throw new Error("mock must be an instance of MockFilePicker");
+            throw new Error('mock must be an instance of MockFilePicker');
         }
         MockFilePicker._instance = mock;
     }
@@ -60,21 +60,21 @@ export class MockFilePickerRecorder {
 
     constructor(ctrl, mock) {
         if (!(mock instanceof MockFilePicker)) {
-            throw new Error("mock must be an instance of MockFilePicker");
+            throw new Error('mock must be an instance of MockFilePicker');
         }
         this.#ctrl = ctrl;
         this.#mock = mock;
     }
 
     browse(source, path) {
-        return this.#ctrl.recordCall(this.#mock, "browse", source, path);
+        return this.#ctrl.recordCall(this.#mock, 'browse', source, path);
     }
 
     createDirectory(source, path, options = {}) {
-        return this.#ctrl.recordCall(this.#mock, "createDirectory", source, path, options);
+        return this.#ctrl.recordCall(this.#mock, 'createDirectory', source, path, options);
     }
 
     upload(source, path, file, options = {}) {
-        return this.#ctrl.recordCall(this.#mock, "upload", source, path, file, options);
+        return this.#ctrl.recordCall(this.#mock, 'upload', source, path, file, options);
     }
 }

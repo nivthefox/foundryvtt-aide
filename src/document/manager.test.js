@@ -2,8 +2,8 @@ import { Suite } from '../../test/quench';
 import { DocumentManager } from './manager';
 import { MockAIProvider } from '../ai/provider/provider.mock';
 import { MockVectorStore } from './vector_store.mock';
-import { MockContext } from '../../test/foundry/context.mock';
-import { MockGame } from '../../test/foundry/game.mock';
+import { MockContext } from '../foundry/context.mock';
+import { MockGame } from '../foundry/game.mock';
 
 import jsmock from '../../test/jsmock';
 const { MockController } = jsmock;
@@ -191,8 +191,8 @@ export default function DocumentManagerTest(quench) {
             docs.set('Doc1', {pages: pages1});
             docs.set('Doc2', {pages: pages2});
 
-            mockFoundry.game.EXPECT().journal.Return(docs).AnyTimes();
-            mockFoundry.EXPECT().fromUuid(jsmock.AnyString).DoAndReturn(id => {
+            mockContext.game.EXPECT().journal.Return(docs).AnyTimes();
+            mockContext.EXPECT().fromUuid(jsmock.AnyString).DoAndReturn(id => {
                 const [doc, page] = id.split('.');
                 return docs.get(doc)?.pages.get(page);
             }).Times(3);

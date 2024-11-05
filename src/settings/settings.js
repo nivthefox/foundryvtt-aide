@@ -4,8 +4,8 @@ export class Settings {
     #module;
     #context;
 
-    constructor(context, module) {
-        this.#context = context;
+    constructor(ctx, module) {
+        this.#context = ctx;
         this.#module = module;
 
         // Initialize all settings from registry

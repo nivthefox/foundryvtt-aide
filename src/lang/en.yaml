@@ -41,3 +41,8 @@ aide:
     VectorStoreQueryBoostFactor:
       name: Vector Store Query Boost Factor
       hint: Boost factor for shorter text matches. Higher values give more weight to shorter but highly relevant matches.
+
+  ui:
+    sidebar:
+      ChatWithAI:
+        text: AIde

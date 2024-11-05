@@ -1,0 +1,18 @@
+@use 'variables';
+@use 'themes';
+@use 'components/sidebar';
+@use 'components/chat';
+@use 'components/message';
+@use 'components/input';
+
+#aide {
+    .window-content {
+        flex-direction: row;
+        padding: 0;
+    }
+
+    @include sidebar.styles;
+    @include chat.styles;
+    @include message.styles;
+    @include input.styles;
+}

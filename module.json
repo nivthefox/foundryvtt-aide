@@ -23,6 +23,7 @@
     "styles": [
         "./dist/aide.css"
     ],
+    "socket": true,
     "languages": [
         {
             "lang": "en",

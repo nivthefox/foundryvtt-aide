@@ -1,0 +1,47 @@
+@use '../variables' as *;
+
+@mixin styles {
+    footer {
+        background: hsl(var(--chat-background));
+        position: sticky;
+        bottom: 0;
+        margin-top: auto;
+        z-index: 1;
+
+        .input {
+            border: 1px solid hsla(var(--assistant-content) / 0.2);
+            border-radius: 0.5rem;
+            background-color: hsla(var(--user-content) / 0.5);
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem;
+
+            textarea {
+                border: none;
+                flex: 1;
+                min-height: $input-min-height;
+                max-height: $input-max-height;
+                resize: none;
+
+                &::placeholder {
+                    color: hsla(var(--placeholder-text) / 0.5);
+                }
+            }
+
+            .send {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity $transition-quick;
+                height: 2rem;
+                line-height: 2rem;
+                width: 2rem;
+            }
+
+            textarea:not(:placeholder-shown) + .send,
+            textarea:focus + .send {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+    }
+}

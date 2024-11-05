@@ -1,5 +1,7 @@
 import {Logger, LogLevels} from './logger';
+import {Store as ConversationStore} from '../conversation/store';
 import {Settings} from '../settings/settings';
+import {renderChatWithAIButton} from '../ui/sidebar';
 
 export class App {
     id;
@@ -9,15 +11,19 @@ export class App {
     logger;
     settings;
 
-    constructor(id, title, version) {
+    constructor(ctx, id, title, version) {
         this.id = id;
         this.name = title;
         this.version = version;
 
-        const context = window;
-
         this.logger = Logger.getLogger(this.name, LogLevels.Debug);
-        this.settings = new Settings(context, this.id);
+
+        this.settings = new Settings(ctx, this.id);
+        this.conversationStore = new ConversationStore(ctx);
+
+        ctx.Hooks.once('setup', () => this.setup());
+        ctx.Hooks.once('ready', () => this.ready());
+        ctx.Hooks.on('renderSidebarTab', (app, html) => renderChatWithAIButton(app, html));
     }
 
     async ready() {
