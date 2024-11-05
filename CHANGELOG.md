@@ -16,3 +16,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added jsmock for mocking in tests.
 - Added a document manager to manage operations on documents.
 - Added a settings manager to manage settings.
+- Added a conversation store to manage conversations.
