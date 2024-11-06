@@ -82,7 +82,7 @@ export default function ClientTest(quench) {
 
     describe('factory creation', () => {
         it('creates client with provider configuration', () => {
-            assert.throws(() => Client.create('invalid', {}), /Unsupported provider/);
+            assert.throws(() => Client.create({provider: 'invalid'}), /Unsupported provider/);
             // Additional provider creation tests would go here once we have real providers
         });
     });

@@ -60,12 +60,11 @@ export class Client {
     /**
      * Create a new AI client
      *
-     * @param {string} provider
-     * @param {AIProviderConfig} configuration
+     * @param {AIProviderSettings} settings
      * @returns {Client}
      */
-    static create(provider, configuration) {
-        const implementation = Client.#createImplementation(provider, configuration);
+    static create(settings) {
+        const implementation = Client.#createImplementation(settings);
         return new Client(implementation);
     }
 
@@ -112,12 +111,11 @@ export class Client {
 
     /**
      * @private
-     * @param {string} provider
-     * @param {AIProviderConfig} configuration
+     * @param {AIProviderSettings} settings
      * @returns {AIProvider}
      */
-    static #createImplementation(provider, configuration) {
-        switch (provider.toLowerCase()) {
+    static #createImplementation(settings) {
+        switch (settings.provider.toLowerCase()) {
             case 'anthropic':
                 throw new Error('Unsupported provider: Anthropic');
                 // disabled temporarily as Anthropic does not support embeddings
@@ -126,11 +124,11 @@ export class Client {
                 //       providers
                 // return new Anthropic(configuration);
             case 'deepinfra':
-                return new DeepInfra(configuration);
+                return new DeepInfra(settings);
             case 'openai':
-                return new OpenAI(configuration);
+                return new OpenAI(settings);
             default:
-                throw new Error(`Unsupported provider: ${provider}`);
+                throw new Error(`Unsupported provider: ${settings.provider}`);
         }
     }
 }

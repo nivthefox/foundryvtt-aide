@@ -15,12 +15,6 @@ export default function DeepInfraProviderTest({describe, it, assert, beforeEach,
         globalThis.fetch = originalFetch;
     });
 
-    describe('initialization', () => {
-        it('requires API key', () => {
-            assert.throws(() => new DeepInfra({}), /API key is required/);
-        });
-    });
-
     describe('model listing', () => {
         let fetchCount = 0;
 
@@ -31,10 +25,10 @@ export default function DeepInfraProviderTest({describe, it, assert, beforeEach,
                 return {
                     ok: true,
                     json: async () => ({
-                        models: [
-                            { id: 'model1', type: 'text-generation' },
-                            { id: 'model2', type: 'embedding' },
-                            { id: 'model3', type: 'other' }
+                        data: [
+                            {id: 'text-chat-model1'},
+                            {id: 'text-chat-model2'},
+                            {id: 'text-embed-model3'},
                         ]
                     })
                 };
@@ -44,18 +38,20 @@ export default function DeepInfraProviderTest({describe, it, assert, beforeEach,
         it('caches chat models', async () => {
             const models1 = await provider.getChatModels();
             const models2 = await provider.getChatModels();
-            assert.deepEqual(models1, ['model1']);
-            assert.deepEqual(models2, ['model1']);
+            assert.deepEqual(models1, ['text-chat-model1', 'text-chat-model2']);
+            assert.deepEqual(models2, ['text-chat-model1', 'text-chat-model2']);
             assert.equal(fetchCount, 1, 'Should only fetch once');
         });
 
-        it('caches embedding models', async () => {
-            const models1 = await provider.getEmbeddingModels();
-            const models2 = await provider.getEmbeddingModels();
-            assert.deepEqual(models1, ['model2']);
-            assert.deepEqual(models2, ['model2']);
-            assert.equal(fetchCount, 1, 'Should only fetch once');
-        });
+        // todo: disabled since there's no way to get the embedding models from the API
+        //       they are temporarily hardcoded in the provider
+        // it('caches embedding models', async () => {
+        //     const models1 = await provider.getEmbeddingModels();
+        //     const models2 = await provider.getEmbeddingModels();
+        //     assert.deepEqual(models1, ['text-embed-model3']);
+        //     assert.deepEqual(models2, ['text-embed-model3']);
+        //     assert.equal(fetchCount, 1, 'Should only fetch once');
+        // });
     });
 
     describe('generation', () => {

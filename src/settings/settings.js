@@ -3,6 +3,7 @@ import SETTINGS_REGISTRY from './settings.json';
 export class Settings {
     #module;
     #context;
+    #choices = {};
 
     constructor(ctx, module) {
         this.#context = ctx;
@@ -22,6 +23,31 @@ export class Settings {
         this[setting] = value;
     }
 
+    getDocumentManagerSettings() {
+        return {
+            ChunkSize: this.#context.game.settings.get(this.#module, 'ChunkSize'),
+            ChunkOverlap: this.#context.game.settings.get(this.#module, 'ChunkOverlap'),
+            EmbeddingModel: this.#context.game.settings.get(this.#module, 'EmbeddingModel'),
+        };
+    }
+
+    getProviderSettings() {
+        return {
+            chat: {
+                provider: this.#context.game.settings.get(this.#module, 'ChatProvider'),
+                apiKey: this.#context.game.settings.get(this.#module, 'ChatAPIKey'),
+                baseURL: this.#context.game.settings.get(this.#module, 'ChatBaseURL'),
+                model: this.#context.game.settings.get(this.#module, 'ChatModel'),
+            },
+            embedding: {
+                provider: this.#context.game.settings.get(this.#module, 'EmbeddingProvider'),
+                apiKey: this.#context.game.settings.get(this.#module, 'EmbeddingAPIKey'),
+                baseURL: this.#context.game.settings.get(this.#module, 'EmbeddingBaseURL'),
+                model: this.#context.game.settings.get(this.#module, 'EmbeddingModel'),
+            }
+        };
+    }
+
     registerSettings() {
         Object.entries(SETTINGS_REGISTRY).forEach(([key, config]) => {
             this.#registerSetting(key, config);
@@ -30,6 +56,13 @@ export class Settings {
         Object.entries(SETTINGS_REGISTRY).forEach(([key, config]) => {
             this[key] = this.#context.game.settings.get(this.#module, key);
         });
+    }
+
+    setChoices(key, values) {
+        this.#choices[key] = values.reduce((acc, value) => {
+            acc[value] = value;
+            return acc;
+        }, {});
     }
 
     /**
@@ -41,12 +74,27 @@ export class Settings {
             throw new Error(`Invalid setting: ${key}`);
         }
 
-        const type = config.type === 'Number'
-            ? new this.#context.foundry.data.fields.NumberField({
-                nullable: false,
-                ...config.range  // spread min, max, step directly into the options
-            })
-            : String;
+        let type;
+        switch (config.type) {
+            case 'Number':
+                type = new this.#context.foundry.data.fields.NumberField({
+                    nullable: false,
+                    ...config.range  // spread min, max, step directly into the options
+                });
+                break;
+            case 'String':
+                type = String;
+                break;
+            case 'StringField':
+                type = new this.#context.foundry.data.fields.StringField({
+                    choices: () => this.#choices[key],
+                    nullable: false,
+                    ...config.options
+                });
+                break;
+            default:
+                type = String;
+        }
 
         this.#context.game.settings.register(this.#module, key, {
             name: `${this.#module}.settings.${key}.name`,

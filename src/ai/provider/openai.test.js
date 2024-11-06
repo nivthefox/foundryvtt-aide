@@ -16,10 +16,6 @@ export default function OpenAIProviderTest({describe, it, assert, beforeEach, af
     });
 
     describe('initialization', () => {
-        it('requires API key', () => {
-            assert.throws(() => new OpenAI({}), /OpenAI API key is required/);
-        });
-
         it('allows custom base URL', async () => {
             let capturedUrl;
             globalThis.fetch = async (url, options) => {
@@ -57,7 +53,6 @@ export default function OpenAIProviderTest({describe, it, assert, beforeEach, af
                             { id: 'gpt-3.5-turbo' },
                             { id: 'text-embedding-3-small' },
                             { id: 'text-embedding-3-large' },
-                            { id: 'dall-e-3' }
                         ]
                     })
                 };

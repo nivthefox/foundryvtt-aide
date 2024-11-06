@@ -9,7 +9,7 @@
  */
 
 /**
- * @typedef {Object} AIProviderConfig
+ * @typedef {Object} AIProviderSettings
  * @property {string} apiKey
  * @property {string} [baseURL]
  */

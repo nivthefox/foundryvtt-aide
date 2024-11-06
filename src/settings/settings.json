@@ -10,7 +10,7 @@
     "scope": "client"
   },
   "ChatModel": {
-    "type": "String",
+    "type": "StringField",
     "default": "",
     "scope": "client"
   },
@@ -54,7 +54,7 @@
     "scope": "client"
   },
   "EmbeddingModel": {
-    "type": "String",
+    "type": "StringField",
     "default": "",
     "scope": "client"
   },

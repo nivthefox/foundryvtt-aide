@@ -9,12 +9,9 @@ export class OpenAI {
     #embeddingModels = null;
 
     /**
-     * @param {AIProviderConfig} config
+     * @param {AIProviderSettings} config
      */
     constructor(config) {
-        if (!config.apiKey) {
-            throw new Error('OpenAI API key is required');
-        }
         this.#apiKey = config.apiKey;
 
         if (config.baseURL) {
@@ -42,7 +39,7 @@ export class OpenAI {
 
         const data = await response.json();
         this.#chatModels = data.data
-            .filter(model => model.id.startsWith('gpt-'))
+            .filter(model => !model.id.toLowerCase().includes('embed'))
             .map(model => model.id);
 
         return this.#chatModels;
@@ -68,7 +65,7 @@ export class OpenAI {
 
         const data = await response.json();
         this.#embeddingModels = data.data
-            .filter(model => model.id.startsWith('text-embedding-'))
+            .filter(model => model.id.toLowerCase().includes('embed'))
             .map(model => model.id);
 
         return this.#embeddingModels;

@@ -4,17 +4,14 @@
  */
 export class DeepInfra {
     #apiKey = null;
-    #baseUrl = 'https://api.deepinfra.com/v1/inference';
+    #baseUrl = 'https://api.deepinfra.com/v1/openai';
     #chatModels = null;
     #embeddingModels = null;
 
     /**
-     * @param {AIProviderConfig} config
+     * @param {AIProviderSettings} config
      */
     constructor(config) {
-        if (!config.apiKey) {
-            throw new Error('DeepInfra API key is required');
-        }
         this.#apiKey = config.apiKey;
     }
 
@@ -37,10 +34,10 @@ export class DeepInfra {
         }
 
         const data = await response.json();
-        this.#chatModels = data.models
-            .filter(model => model.type === 'text-generation')
-            .map(model => model.id);
-
+        this.#chatModels = data.data
+            .filter(model => !model.id.toLowerCase().includes('embed'))
+            .map(model => model.id)
+            .sort((a, b) => a.localeCompare(b));
         return this.#chatModels;
     }
 
@@ -48,26 +45,47 @@ export class DeepInfra {
      * @returns {Promise<string[]>}
      */
     async getEmbeddingModels() {
-        if (this.#embeddingModels !== null) {
-            return this.#embeddingModels;
-        }
+        // todo: temporarily hardcoded since there's no way to get the embedding
+        //       models from the API
+        return [
+            'BAAI/bge-base-en-v1.5',
+            'BAAI/bge-large-en-v1.5',
+            'BAAI/bge-m3',
+            'intfloat/e5-base-v2',
+            'intfloat/e5-large-v2',
+            'intfloat/multilingual-e5-large',
+            'sentence-transformers/all-MiniLM-L12-v2',
+            'sentence-transformers/all-MiniLM-L6-v2',
+            'sentence-transformers/all-mpnet-base-v2',
+            'sentence-transformers/clip-ViT-B-32',
+            'sentence-transformers/clip-ViT-B-32-multilingual-v1',
+            'sentence-transformers/multi-qa-mpnet-base-dot-v1',
+            'sentence-transformers/paraphrase-MiniLM-L6-v2',
+            'shibing624/text2vec-base-chinese',
+            'thenlper/gte-base',
+            'thenlper/gte-large',
+        ].sort((a, b) => a.localeCompare(b));
 
-        const response = await fetch(`${this.#baseUrl}/models`, {
-            headers: {
-                'Authorization': `Bearer ${this.#apiKey}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`DeepInfra API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        this.#embeddingModels = data.models
-            .filter(model => model.type === 'embedding')
-            .map(model => model.id);
-
-        return this.#embeddingModels;
+        // if (this.#embeddingModels !== null) {
+        //     return this.#embeddingModels;
+        // }
+        //
+        // const response = await fetch(`${this.#baseUrl}/models`, {
+        //     headers: {
+        //         'Authorization': `Bearer ${this.#apiKey}`
+        //     }
+        // });
+        //
+        // if (!response.ok) {
+        //     throw new Error(`DeepInfra API error: ${response.status}`);
+        // }
+        //
+        // const data = await response.json();
+        // this.#embeddingModels = data.data
+        //     .filter(model => model.id.toLowerCase().includes('embed'))
+        //     .map(model => model.id);
+        //
+        // return this.#embeddingModels;
     }
 
     /**

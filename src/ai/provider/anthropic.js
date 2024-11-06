@@ -9,7 +9,7 @@ export class Anthropic {
     #embeddingModels = null;
 
     /**
-     * @param {AIProviderConfig} config
+     * @param {AIProviderSettings} config
      */
     constructor(config) {
         if (!config.apiKey) {
