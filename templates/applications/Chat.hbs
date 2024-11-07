@@ -20,6 +20,8 @@
                     <time datetime="{{ message.time }}">{{ message.time }}</time>
                 </header>
                 <section class="content">
+                    <!--
+                    // todo: wire these buttons up
                     <nav class="buttons">
                         {{#if isUserMessage}}
                             <button class="edit">
@@ -30,6 +32,7 @@
                             <i class="fa fa-copy"></i>
                         </button>
                     </nav>
+                    //-->
                     {{{ message.content }}}
                 </section>
             </section>

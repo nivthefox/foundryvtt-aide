@@ -21,6 +21,11 @@
             padding: $message-padding;
             position: relative;
             width: 100%;
+
+            user-select: text;
+            * {
+                user-select: text;
+            }
         }
 
         &.user .content {
