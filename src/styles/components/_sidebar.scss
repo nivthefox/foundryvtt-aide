@@ -3,7 +3,7 @@
 @mixin styles {
     .sidebar {
         display: flex;
-        flex-basis: 300px;
+        flex: 0 0 300px;
         flex-direction: column;
         min-height: 0;
         overflow-y: auto;

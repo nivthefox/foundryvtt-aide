@@ -5,6 +5,7 @@
         background: hsla(var(--chat-background));
         display: flex;
         flex: 1;
+        min-width: 0;
         min-height: 0;
         padding: 0.25rem;
         position: relative;
@@ -58,9 +59,15 @@
             flex-direction: column;
             min-height: 0;
             padding-right: 0.5rem;
-            overflow-y: auto;
+            overflow: auto;
             user-select: all;
             scrollbar-color: hsla(var(--assistant-content) / 0.3) hsl(var(--user-content));
+
+            pre, code {
+                overflow-x: auto;  // Allow horizontal scroll for code
+                white-space: pre-wrap;  // Allow wrapping on white space
+                word-break: break-word;  // Break words that are too long
+            }
         }
     }
 }

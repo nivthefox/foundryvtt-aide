@@ -81,9 +81,11 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         if (!content || content === '<p><br class="ProseMirror-trailingBreak"></p>') {
             return null;
         }
-        return content
+        const cleaned = content
             .replace(/<br class="ProseMirror-trailingBreak">/g, '')
             .replace(/<br><\/p>/g, '</p>');
+
+        return this.converter.makeMarkdown(cleaned);
     }
 
     #getEditorElements(html) {
@@ -196,6 +198,7 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
     static async sendMessage(event, target) {
         const proseMirror = this.element.querySelector('prose-mirror');
         const editorContent = this.element.querySelector('.editor-content');
+        if (!proseMirror || !editorContent || !editorContent.innerText.trim().length) return;
         const content = this.#formatMessageContent(editorContent.innerHTML);
         if (!content) return;
 

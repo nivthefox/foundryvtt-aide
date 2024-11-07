@@ -181,14 +181,20 @@ export class DeepInfra {
      * Formats context and query for the chat model
      * @private
      * @param {ContextDocument[]} context
-     * @param {ConversationMessage} query
+     * @param {ConversationMessage[]} query
      * @returns {ConversationMessage[]}
      */
     #formatChatInput(context, query) {
         return [
             {
                 'role': 'system',
-                'content': `You are a helpful AI assistant.
+                'content': `You are a helpful AI assistant named AIde, running within the FoundryVTT environment.
+
+<synopsis>
+The user is running the following game system: ${game.system.title}
+The user is running the following game world: ${game.world.title}
+The user's name is: ${game.user.name}
+</synopsis>
 
 <formatting>
 Use markdown to add emphasis and structure to your messages:
