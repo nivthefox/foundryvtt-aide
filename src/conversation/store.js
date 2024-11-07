@@ -105,7 +105,7 @@ export class Store {
     async delete(userId, conversationId) {
         const path = this.#getConversationPath(userId, conversationId);
         const fileName = path.split('/').pop();
-        const file = new File([''], fileName, {type: 'application/json'});
+        const file = new File(['{}'], fileName, {type: 'application/json'});
         const response = await this.#context.FilePicker.upload(this.#source, this.#storagePath, file);
 
         if (!response.path) {
@@ -141,6 +141,15 @@ export class Store {
                 throw new Error('File not found');
             }
             const conversation = await response.json();
+            if (!conversation || conversation.id !== conversationId) {
+                // deleted
+                this.#conversations.delete(conversationId);
+                return;
+            }
+            if (conversation.format !== STORAGE_FORMAT_VERSION) {
+                // todo: migrate conversation
+                throw new Error('Invalid conversation format');
+            }
             this.#conversations.set(conversationId, {...conversation, loaded: true});
         }
 

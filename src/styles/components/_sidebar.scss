@@ -16,21 +16,33 @@
             padding: 0;
 
             li {
+                display: flex; // Add this to make children align horizontally
+                align-items: center; // Vertically center the content
+                justify-content: space-between; // Space between link and icon
+
                 &.active {
                     background: hsla(var(--assistant-content) / .25);
                 }
-            }
 
-            a {
-                display: block;
-                width: 100%;
-                padding: 0.5rem;
-                border: 1px solid transparent;
-                color: inherit;
-                text-decoration: none;
+                a {
+                    flex: 1; // Allow link to take up remaining space
+                    padding: 0.5rem;
+                    border: 1px solid transparent;
+                    color: inherit;
+                    text-decoration: none;
 
-                &:hover {
-                    border: 1px solid hsla(var(--assistant-content) / .5);
+                    &:hover {
+                        border: 1px solid hsla(var(--assistant-content) / .5);
+                    }
+                }
+
+                i.delete {
+                    padding: 0.5rem;
+                    cursor: pointer;
+
+                    &:hover {
+                        color: hsla(var(--assistant-content) / .8);
+                    }
                 }
             }
         }

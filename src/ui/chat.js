@@ -21,6 +21,7 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
             resizable: true,
         },
         actions: {
+            delete: Chat.deleteConversation,
             load: Chat.loadConversation,
             new: Chat.newConversation,
             rename: Chat.rename,
@@ -211,9 +212,16 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Static Methods
+    static async deleteConversation(event, target) {
+        const userId = target.parentElement.getAttribute('data-user-id');
+        const id = target.parentElement.getAttribute('data-id');
+        await this.conversationStore.delete(userId, id);
+        await this.render(false);
+    }
+
     static async loadConversation(event, target) {
-        const userId = target.getAttribute('data-user-id');
-        const id = target.getAttribute('data-id');
+        const userId = target.parentElement.getAttribute('data-user-id');
+        const id = target.parentElement.getAttribute('data-id');
         this.#activeConversation = await this.conversationStore.get(userId, id);
         await this.render(false);
     }
