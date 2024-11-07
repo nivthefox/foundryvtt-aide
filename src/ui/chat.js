@@ -213,6 +213,15 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Static Methods
     static async deleteConversation(event, target) {
+        const confirmation = await Dialog.confirm({
+            title: 'Delete Conversation',
+            content: 'Are you sure you want to delete this conversation?',
+        });
+
+        if (!confirmation) {
+            return;
+        }
+
         const userId = target.parentElement.getAttribute('data-user-id');
         const id = target.parentElement.getAttribute('data-id');
         await this.conversationStore.delete(userId, id);
