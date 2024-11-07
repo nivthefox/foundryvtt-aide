@@ -17,3 +17,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a document manager to manage operations on documents.
 - Added a settings manager to manage settings.
 - Added a conversation store to manage conversations.
+- Created a Foundry ApplicationV2 to interact with the AI.
+- 
