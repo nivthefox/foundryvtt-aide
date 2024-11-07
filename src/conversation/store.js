@@ -65,7 +65,9 @@ export class Store {
      * @returns {Conversation[]}
      */
     conversations() {
-        return Array.from(this.#conversations.values());
+        return Array.from(this.#conversations.values())
+            .map(({id, userId, title, messages}) =>
+                ({id, userId, title, messages: messages ? messages.length : 0 }));
     }
 
     /**
@@ -86,22 +88,13 @@ export class Store {
             format: STORAGE_FORMAT_VERSION,
         };
 
-        const path = this.#getConversationPath(userId, id);
-        const fileName = path.split('/').pop();
-        const file = new File([JSON.stringify(conversation)], fileName, {type: 'application/json'});
-        const response = await this.#context.FilePicker.upload(this.#source, this.#storagePath, file);
-
-        if (!response.path) {
-            throw new Error('Failed to save conversation');
-        }
-
         this.#context.game.socket.emit('module.aide', {
             name: 'conversation.create',
             data: conversation
         });
 
         this.#conversations.set(id, {...conversation, loaded: true});
-        return {...conversation, loaded: true};
+        return conversation;
     }
 
     /**
@@ -143,7 +136,7 @@ export class Store {
      * @throws {Error} if the conversation is not valid
      */
     async get(userId, conversationId) {
-        if (!this.#conversations.has(conversationId)) {
+        if (!this.#conversations.has(conversationId) || !this.#conversations.get(conversationId).loaded) {
             const path = `/${this.#getConversationPath(userId, conversationId)}`;
             const response = await this.#context.fetch(path);
             if (!response.ok) {
@@ -153,7 +146,12 @@ export class Store {
             this.#conversations.set(conversationId, {...conversation, loaded: true});
         }
 
-        return this.#conversations.get(conversationId);
+        const conversation = this.#conversations.get(conversationId);
+        if (!conversation) {
+            throw new Error('Conversation not found');
+        }
+
+        return structuredClone(conversation);
     }
 
     /**
@@ -163,14 +161,7 @@ export class Store {
      */
     async update(conversation) {
         const {userId, id} = conversation;
-        const path = this.#getConversationPath(userId, id);
-        const fileName = path.split('/').pop();
-        const file = new File([JSON.stringify(conversation)], fileName, {type: 'application/json'});
-        const response = await this.#context.FilePicker.upload(this.#source, this.#storagePath, file);
-
-        if (!response.path) {
-            throw new Error('Failed to save conversation');
-        }
+        await this.#uploadConversation(userId, conversation);
 
         this.#context.game.socket.emit('module.aide', {
             name: 'conversation.update',
@@ -240,11 +231,8 @@ export class Store {
             }
             const userId = parts[0];
             const conversationId = parts[1];
-            this.#conversations.set(conversationId, {
-                id: conversationId,
-                userId,
-                loaded: false
-            });
+            this.#conversations.set(conversationId, {id: conversationId, userId, loaded: false});
+            await this.get(userId, conversationId);
         }
     }
 
@@ -254,5 +242,16 @@ export class Store {
 
     get #source() {
         return 'data';
+    }
+
+    async #uploadConversation(userId, conversation) {
+        const path = this.#getConversationPath(userId, conversation.id);
+        const fileName = path.split('/').pop();
+        const file = new File([JSON.stringify(conversation)], fileName, {type: 'application/json'});
+        const response = await this.#context.FilePicker.upload(this.#source, this.#storagePath, file);
+
+        if (!response.path) {
+            throw new Error('Failed to save conversation');
+        }
     }
 }

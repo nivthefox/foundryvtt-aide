@@ -20,7 +20,11 @@
                 "test/",
                 "test/**/"
             ],
-            "extensions": ["js", "json", "yaml"],
+            "extensions": [
+                "js",
+                "json",
+                "yaml"
+            ],
             "quiet": false,
             "silent": false,
             "inherit": true
@@ -29,7 +33,9 @@
             "patterns": [
                 "src/styles/"
             ],
-            "extensions": ["scss"],
+            "extensions": [
+                "scss"
+            ],
             "quiet": false,
             "silent": false,
             "inherit": true
@@ -42,7 +48,11 @@
                 "test/",
                 "test/**/"
             ],
-            "extensions": ["js", "json", "yaml"],
+            "extensions": [
+                "js",
+                "json",
+                "yaml"
+            ],
             "quiet": false,
             "silent": false,
             "inherit": true
@@ -67,6 +77,7 @@
         "@rollup/rollup-linux-x64-gnu": "^4.21.0"
     },
     "dependencies": {
-        "@rollup/plugin-terser": "^0.4.4"
+        "@rollup/plugin-terser": "^0.4.4",
+        "luxon": "^3.5.0"
     }
 }

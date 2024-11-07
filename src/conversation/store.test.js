@@ -129,17 +129,6 @@ export default function StoreTest(quench) {
                 mockUtils.EXPECT().randomID()
                     .Return('generated-id');
 
-                mockFilePicker.EXPECT().upload(
-                    'data',
-                    'worlds/test-world/conversations',
-                    jsmock.Satisfies(file =>
-                        file.name === 'user1.generated-id.json'
-                        && file.type === 'application/json'
-                        && file.size > 0
-                    ),
-                    {}
-                ).Return({ path: 'worlds/test-world/conversations/user1.generated-id.json' });
-
                 mockSocket.EXPECT().emit('module.aide', {
                     name: 'conversation.create',
                     data: expectedConversation
@@ -151,28 +140,6 @@ export default function StoreTest(quench) {
                 const conversations = store.conversations();
                 assert.equal(conversations.length, 1);
                 assert.deepEqual(conversations[0], {...expectedConversation, loaded: true});
-            });
-
-            it('throws error if upload fails', async () => {
-                mockUtils.EXPECT().randomID()
-                    .Return('generated-id');
-
-                mockFilePicker.EXPECT().upload(
-                    'data',
-                    'worlds/test-world/conversations',
-                    jsmock.AnyObject,
-                    {}
-                ).Do((source, path, file, options) => {
-                    throw new Error('Upload failed');
-                });
-
-                try {
-                    await store.create('user1');
-                    assert.fail('Should have thrown an error');
-                } catch (error) {
-                    assert.match(error.message, /Upload failed/);
-                }
-                assert.equal(store.conversations().length, 0);
             });
         });
 

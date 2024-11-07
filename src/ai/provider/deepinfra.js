@@ -91,19 +91,20 @@ export class DeepInfra {
     /**
      * @param {string} model
      * @param {ContextDocument[]} context
-     * @param {string} query
+     * @param {ConversationMessage[]} query
      * @param {boolean} [stream=false]
      * @returns {Promise<string> | AsyncGenerator<string, string>}
      */
     async generate(model, context, query, stream = false) {
-        const response = await fetch(`${this.#baseUrl}/${model}`, {
+        const response = await fetch(`${this.#baseUrl}/chat/completions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.#apiKey}`
             },
             body: JSON.stringify({
-                input: this.#formatChatInput(context, query),
+                model: model,
+                messages: this.#formatChatInput(context, query),
                 stream
             })
         });
@@ -125,20 +126,25 @@ export class DeepInfra {
                     const lines = chunk.split('\n').filter(line => line.trim());
 
                     for (const line of lines) {
-                        try {
-                            const data = JSON.parse(line);
-                            if (data.token?.text) {
-                                yield data.token.text;
+                        if (line === 'data: [DONE]') {
+                            continue;
+                        }
+
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.choices?.[0]?.delta?.content) {
+                                    yield data.choices[0].delta.content;
+                                }
                             }
-                        } catch (e) {
-                            // Skip malformed lines
+                            catch (e) {}
                         }
                     }
                 }
             })();
         } else {
             const data = await response.json();
-            return data.results[0].generated_text;
+            return data.choices[0].message.content;
         }
     }
 
@@ -175,13 +181,32 @@ export class DeepInfra {
      * Formats context and query for the chat model
      * @private
      * @param {ContextDocument[]} context
-     * @param {string} query
-     * @returns {string}
+     * @param {ConversationMessage} query
+     * @returns {ConversationMessage[]}
      */
     #formatChatInput(context, query) {
-        return `Context:
-${context.map(doc => `# ${doc.title}\n${doc.content}`).join('\n\n')}
+        return [
+            {
+                'role': 'system',
+                'content': `You are a helpful AI assistant.
 
-Question: ${query}`;
+<formatting>
+Use markdown to add emphasis and structure to your messages:
+- **bold**
+- _italic_
+- [links](https://example.com)
+- \`code\`
+- > quotes
+- Lists with bullets like this list
+- Headers with #, ##, ###, etc.
+</formatting>
+
+<context>
+Use this context to answer the user's question:
+${context.map(doc => `# ${doc.title}\n${doc.content}`).join('\n\n')}
+</context>`
+            },
+            ...query
+        ];
     }
 }

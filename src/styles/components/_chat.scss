@@ -16,17 +16,17 @@
             top: 0;
             z-index: 1;
 
-            .context {
+            .actions {
                 position: absolute;
                 right: 0;
                 top: 0;
                 font-size: 0.75rem;
 
-                .expand {
+                button {
                     height: 2rem;
                     width: 2rem;
                     line-height: 2rem;
-                    display: block;
+                    display: inline-block;
                     position: relative;
 
                     span {
@@ -46,7 +46,7 @@
                     }
                 }
 
-                i.fa {
+                i {
                     margin-right: auto;
                 }
             }

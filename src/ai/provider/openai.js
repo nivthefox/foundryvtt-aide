@@ -74,7 +74,7 @@ export class OpenAI {
     /**
      * @param {string} model
      * @param {ContextDocument[]} context
-     * @param {string} query
+     * @param {ConversationMessage[]} query
      * @param {boolean} [stream=false]
      * @returns {Promise<string> | AsyncGenerator<string, string>}
      */
@@ -82,10 +82,26 @@ export class OpenAI {
         const messages = [
             {
                 role: 'system',
-                content: `You are a helpful AI assistant. Use this context to answer the user's question:
-${context.map(doc => `# ${doc.title}\n${doc.content}`).join('\n\n')}`
+                content: `You are a helpful AI assistant.
+
+<formatting>
+Use markdown to add emphasis and structure to your messages:
+- **bold**
+- _italic_
+- [links](https://example.com)
+- \`code\`
+- > quotes
+- Lists with bullets like this list
+- Headers with #, ##, ###, etc.
+</formatting>
+
+<context>
+Use this context to answer the user's question:
+${context.map(doc => `# ${doc.title}\n${doc.content}`).join('\n\n')}
+</context>`,
+                time: Date
             },
-            { role: 'user', content: query }
+            ...query
         ];
 
         const response = await fetch(`${this.#baseUrl}/chat/completions`, {
@@ -118,11 +134,18 @@ ${context.map(doc => `# ${doc.title}\n${doc.content}`).join('\n\n')}`
                     const lines = chunk.split('\n').filter(line => line.trim());
 
                     for (const line of lines) {
+                        if (line === 'data: [DONE]') {
+                            continue;
+                        }
+
                         if (line.startsWith('data: ')) {
-                            const data = JSON.parse(line.slice(6));
-                            if (data.choices?.[0]?.delta?.content) {
-                                yield data.choices[0].delta.content;
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.choices?.[0]?.delta?.content) {
+                                    yield data.choices[0].delta.content;
+                                }
                             }
+                            catch (e) {}
                         }
                     }
                 }

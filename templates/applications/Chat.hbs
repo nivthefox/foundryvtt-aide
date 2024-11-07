@@ -1,25 +1,23 @@
 <article class="chat">
     <section class="conversation">
+    {{#if title}}
         <h2>
             {{ title }}
-            <aside class="context {{#if context.expanded}}expanded{{/if}}">
-                {{#if context.expanded}}
-                    <button class="expand">
-                        <i class="fas fa-minus"></i>
+            <aside class="actions">
+                    <button class="settings" data-action="settings">
+                        <i class="fas fa-sliders"></i>
                     </button>
-                {{else}}
-                    <button class="expand">
+                    <button class="context" data-action="context">
                         <i class="fas fa-paperclip"></i>
                         {{#if context.documents.length}}<span>{{ context.documents.length }}</span>{{/if}}
                     </button>
-                {{/if}}
             </aside>
         </h2>
         {{#each messages as | message | }}
-            <section class="message {{ message.user.type }}">
+            <section class="message {{ message.role }}">
                 <header>
-                    {{~ message.user.name ~}}
-                    <time datetime="{{ message.time.timestamp }}">{{ message.time.display }}</time>
+                    {{~ message.user ~}}
+                    <time datetime="{{ message.time }}">{{ message.time }}</time>
                 </header>
                 <section class="content">
                     <nav class="buttons">
@@ -38,12 +36,18 @@
         {{/each}}
 
         <footer>
-            <section class="input">
-                <textarea placeholder="{{ placeholder }}"></textarea>
+            <section class="input" data-action="send" toggled="true">
+                {{#unless waitingForResponse}}
+                <prose-mirror name="query" value="{{query}}">
+                    {{placeholder}}
+                </prose-mirror>
+                <span class="placeholder-text">How can I AIde you?</span>
                 <button class="send">
                     <i class="fa fa-arrow-turn-down-left"></i>
                 </button>
+                {{/unless}}
             </section>
         </footer>
+    {{/if}}
     </section>
 </article>

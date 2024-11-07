@@ -4,6 +4,7 @@
 @use 'components/chat';
 @use 'components/message';
 @use 'components/input';
+@use 'components/settings';
 
 #aide {
     .window-content {
@@ -15,4 +16,8 @@
     @include chat.styles;
     @include message.styles;
     @include input.styles;
+}
+
+#aide-settings {
+    @include settings.styles;
 }

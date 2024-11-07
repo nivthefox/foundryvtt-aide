@@ -25,7 +25,8 @@ export class App {
 
         ctx.Hooks.once('setup', () => this.setup(ctx, id));
         ctx.Hooks.once('ready', () => this.ready(ctx, id));
-        ctx.Hooks.on('renderSidebarTab', (app, html) => renderChatWithAIButton(app, html));
+        ctx.Hooks.on('renderSidebarTab', (app, html) =>
+            renderChatWithAIButton(app, html, this.conversationStore, this.chatClient));
     }
 
     async ready() {
@@ -45,8 +46,12 @@ export class App {
         // Initialize Document Manager
         const managerSettings = this.settings.getDocumentManagerSettings();
         this.documentManager = new DocumentManager(ctx, managerSettings, this.embeddingClient, this.vectorStore);
+
         // todo: only rebuild if necessary
         await this.documentManager.rebuildVectorStore();
+
+        // Initialize Conversation Store
+        await this.conversationStore.initialize();
 
         // Register model choices
         const chatModels = await this.chatClient.getChatModels();

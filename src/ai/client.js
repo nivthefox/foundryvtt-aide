@@ -89,7 +89,7 @@ export class Client {
      *
      * @param {string} model
      * @param {ContextDocument[]} context
-     * @param {string} query
+     * @param {ConversationMessage[]} query
      * @param {boolean} [stream=false]
      * @returns {Promise<string> | AsyncGenerator<string, string>}
      */

@@ -43,6 +43,10 @@ aide:
       hint: Boost factor for shorter text matches. Higher values give more weight to shorter but highly relevant matches.
 
   ui:
+    chat-settings:
+      actions:
+        apply: Apply
+        cancel: Cancel
     sidebar:
       ChatWithAI:
         text: AIde

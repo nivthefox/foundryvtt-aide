@@ -1,0 +1,32 @@
+@use '../variables' as *;
+
+@mixin styles {
+    .settings {
+        padding: 1rem;
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+
+            span {
+                flex: 0 0 125px;
+                white-space: nowrap;
+            }
+
+            select {
+                flex: 1;
+                min-width: 100px;
+                max-width: 250px;
+            }
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+    }
+}

@@ -1,0 +1,24 @@
+<section class="settings">
+    <label>
+        <span>Chat Model</span>
+        <select class="chat-model">
+            {{selectOptions chatModels selected=chatModel}}
+        </select>
+    </label>
+    <label>
+        <span>Embedding Model</span>
+        <select class="embedding-model">
+            {{selectOptions embeddingModels selected=embeddingModel}}
+        </select>
+    </label>
+    <footer class="actions">
+        <button data-action="cancel">
+            <i class="fas fa-xmark"></i>
+            {{localize 'aide.ui.chat-settings.actions.cancel'}}
+        </button>
+        <button data-action="apply">
+            <i class="fas fa-check"></i>
+            {{localize 'aide.ui.chat-settings.actions.apply'}}
+        </button>
+    </footer>
+</section>

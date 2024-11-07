@@ -2,7 +2,7 @@
  * @typedef {Object} AIProvider
  * @property {() => Promise<string[]>} getChatModels
  * @property {() => Promise<string[]>} getEmbeddingModels
- * @property {(model: string, context: ContextDocument[], query: string, stream?: boolean) =>
+ * @property {(model: string, context: ContextDocument[], query: ConversationMessage[], stream?: boolean) =>
  *            Promise<string | AsyncGenerator<string, string>>} generate
  * @property {(model: string, id: string, chunks: Chunk[]) =>
  *            Promise<EmbeddingDocument>} embed
@@ -17,6 +17,7 @@
 /**
  * @typedef {Object} ContextDocument
  * @property {string} uuid
+ * @property {string} [title]
  * @property {string} [content]
  */
 
@@ -39,22 +40,9 @@
 
 /**
  * @typedef {Object} ConversationMessage
- * @property {ConversationMessageUser} user
- * @property {boolean} isUserMessage
+ * @property {string} role
  * @property {string} content
- * @property {ConversationMessageTime} time
- */
-
-/**
- * @typedef {Object} ConversationMessageUser
- * @property {string} name
- * @property {string} type
- */
-
-/**
- * @typedef {Object} ConversationMessageTime
- * @property {string} display
- * @property {number} timestamp
+ * @property {number} time
  */
 
 /**
