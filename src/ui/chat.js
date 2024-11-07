@@ -23,6 +23,7 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         actions: {
             load: Chat.loadConversation,
             new: Chat.newConversation,
+            rename: Chat.rename,
             send: Chat.sendMessage,
             settings: Chat.openChatSettings,
         }
@@ -56,9 +57,8 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async _onRender(data, options) {
         await super._onRender(data, options);
-        const html = this.element;
-        this.#setupEditor(html);
-        this.#scrollToBottom(html);
+        this.#setupEditor(this.element);
+        this.#scrollToBottom(this.element);
     }
 
     async _preparePartContext(partId, context) {
@@ -75,6 +75,7 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         this.#setupFocusEvents(editorContent, placeholderText);
         this.#setupContentObserver(editorContent, placeholderText, sendButton);
         this.#setupKeyboardShortcuts(proseMirror, sendButton);
+        this.#setupRenameEvent(this.element);
     }
 
     #formatMessageContent(content) {
@@ -124,7 +125,25 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async #prepareSidebar() {
-        return this.conversationStore.conversations();
+        const conversations = this.conversationStore.conversations();
+        const sidebarConversations = {};
+
+        conversations
+            .sort((a, b) => b.last - a.last)
+            .forEach(conversation => {
+                const user = game.users.get(conversation.userId).name;
+                if (!sidebarConversations[user]) {
+                    sidebarConversations[user] = [];
+                }
+                sidebarConversations[user].push(conversation);
+            });
+
+        return Object.entries(sidebarConversations)
+            .sort(([userA], [userB]) => userA.localeCompare(userB))
+            .reduce((acc, [username, convos]) => {
+                acc[username] = convos;
+                return acc;
+            }, {});
     }
 
     #scrollToBottom(html) {
@@ -163,6 +182,19 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         });
     }
 
+    #setupRenameEvent(html) {
+        const input = html.querySelector('.chat h2 input');
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                Chat.rename.call(this, event, input);
+            }
+        });
+        input.addEventListener('blur', event => {
+            Chat.rename.call(this, event, input);
+        });
+    }
+
     #setupKeyboardShortcuts(proseMirror, sendButton) {
         proseMirror.addEventListener('keydown', event => {
             const isSubmitKey = (event.ctrlKey || event.metaKey) && event.key === 'Enter';
@@ -188,6 +220,16 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
 
     static async newConversation(event, target) {
         this.#activeConversation = await this.conversationStore.create(game.user.id);
+        await this.render(false);
+    }
+
+    static async rename(event, target) {
+        if (target.value === '' || target.value === this.#activeConversation.title) {
+            await this.render(false);
+            return;
+        }
+        this.#activeConversation.title = target.value;
+        await this.conversationStore.update(this.#activeConversation);
         await this.render(false);
     }
 
@@ -218,7 +260,8 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
 
         // Get AI response
         const model = game.settings.get('aide', 'ChatModel');
-        const response = await this.chatClient.generate(model, [], conversation.messages, true);
+        const response = await this.chatClient.generate(model, [],
+            this.#activeConversation.title, conversation.messages, true);
 
         // Initialize AI message
         conversation.messages.push({
@@ -239,6 +282,21 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
             conversation.messages[idx].time = DateTime.now().toUTC().toMillis();
             contentElement.innerHTML = this.converter.makeHtml(conversation.messages[idx].content);
             conversationElement.scrollTop = conversationElement.scrollHeight;
+        }
+
+        // Name the conversation if it's unnamed
+        if (conversation.title === 'New Conversation') {
+            const response = await this.chatClient.generate(model, [],
+                conversation.title, [
+                    ...conversation.messages,
+                    {
+                        role: 'user',
+                        content: 'Provide a name for this conversation of 50 characters or less. Put the name in an HTML <title> element.',
+                        time: DateTime.now().toUTC().toMillis()
+                    }
+                ], false);
+
+            conversation.title = response.match(/<title>(.*?)<\/title>/)[1];
         }
 
         // Finalize

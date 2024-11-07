@@ -2,7 +2,7 @@
     <section class="conversation">
     {{#if title}}
         <h2>
-            {{ title }}
+            <input type="text" value="{{ title }}" />
             <aside class="actions">
                     <button class="settings" data-action="settings">
                         <i class="fas fa-sliders"></i>
@@ -36,7 +36,7 @@
         {{/each}}
 
         <footer>
-            <section class="input" data-action="send" toggled="true">
+            <section class="input" data-action="send">
                 {{#unless waitingForResponse}}
                 <prose-mirror name="query" value="{{query}}">
                     {{placeholder}}

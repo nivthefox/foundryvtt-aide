@@ -89,11 +89,13 @@ export class Client {
      *
      * @param {string} model
      * @param {ContextDocument[]} context
+     * @param {string} title
      * @param {ConversationMessage[]} query
      * @param {boolean} [stream=false]
      * @returns {Promise<string> | AsyncGenerator<string, string>}
      */
-    async generate(model, context, query, stream = false) {
+    async generate(model, context, title, query, stream = false) {
+        query = this.#formatChatInput(context, title, query);
         return this.#implementation.generate(model, context, query, stream);
     }
 
@@ -131,4 +133,47 @@ export class Client {
                 throw new Error(`Unsupported provider: ${settings.provider}`);
         }
     }
+
+    /**
+     * Formats context and query for the chat model
+     * @private
+     * @param {ContextDocument[]} context
+     * @param {string} title
+     * @param {ConversationMessage[]} query
+     * @returns {ConversationMessage[]}
+     */
+    #formatChatInput(context, title, query) {
+        return [
+            {
+                role: 'system',
+                content: `You are a helpful AI assistant named AIde, running within the FoundryVTT environment.
+
+<synopsis>
+The user is running the following game system: ${game.system.title}
+The user is running the following game world: ${game.world.title}
+The user's name is: ${game.user.name}
+The title of this conversation is: ${title}
+The current time is: ${new Date().toLocaleString()} 
+</synopsis>
+
+<formatting>
+Use markdown to add emphasis and structure to your messages:
+- **bold**
+- _italic_
+- [links](https://example.com)
+- \`code\`
+- > quotes
+- Lists with bullets like this list
+- Headers with #, ##, ###, etc.
+</formatting>
+
+<context>
+Use this context to answer the user's question:
+${context.map(doc => `# ${doc.title}\n${doc.content}`).join('\n\n')}
+</context>`
+            },
+            ...query
+        ];
+    }
+
 }

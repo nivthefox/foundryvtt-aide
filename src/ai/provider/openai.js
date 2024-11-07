@@ -79,8 +79,6 @@ export class OpenAI {
      * @returns {Promise<string> | AsyncGenerator<string, string>}
      */
     async generate(model, context, query, stream = false) {
-        const messages = this.#formatChatInput(context, query);
-
         const response = await fetch(`${this.#baseUrl}/chat/completions`, {
             method: 'POST',
             headers: {
@@ -89,7 +87,7 @@ export class OpenAI {
             },
             body: JSON.stringify({
                 model,
-                messages,
+                messages: query,
                 stream
             })
         });
@@ -166,43 +164,5 @@ export class OpenAI {
             id,
             vectors: responses
         };
-    }
-
-    /**
-     * Formats context and query for the chat model
-     * @private
-     * @param {ContextDocument[]} context
-     * @param {ConversationMessage[]} query
-     * @returns {ConversationMessage[]}
-     */
-    #formatChatInput(context, query) {
-        return [
-            {
-                'role': 'system',
-                'content': `You are a helpful AI assistant named AIde, running within the FoundryVTT environment.
-
-<synopsis>
-The user is running the following game system: ${game.system.title}
-The user is running the following game world: ${game.world.title}
-</synopsis>
-
-<formatting>
-Use markdown to add emphasis and structure to your messages:
-- **bold**
-- _italic_
-- [links](https://example.com)
-- \`code\`
-- > quotes
-- Lists with bullets like this list
-- Headers with #, ##, ###, etc.
-</formatting>
-
-<context>
-Use this context to answer the user's question:
-${context.map(doc => `# ${doc.title}\n${doc.content}`).join('\n\n')}
-</context>`
-            },
-            ...query
-        ];
     }
 }

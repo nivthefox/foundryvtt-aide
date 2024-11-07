@@ -17,6 +17,12 @@
             top: 0;
             z-index: 1;
 
+            input {
+                background: transparent;
+                border: transparent;
+                font-size: 1.5rem;
+            }
+
             .actions {
                 position: absolute;
                 right: 0;

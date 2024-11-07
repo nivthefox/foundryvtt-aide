@@ -28,6 +28,7 @@
  * @property {string} [title]
  * @property {ConversationMessage[]} [messages]
  * @property {ContextDocument[]} [context]
+ * @property {number} [last]
  */
 
 /**

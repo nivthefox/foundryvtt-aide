@@ -67,7 +67,11 @@ export class Store {
     conversations() {
         return Array.from(this.#conversations.values())
             .map(({id, userId, title, messages}) =>
-                ({id, userId, title, messages: messages ? messages.length : 0 }));
+                ({
+                    id, userId, title,
+                    messages: messages ? messages.length : 0,
+                    last: messages ? messages[messages.length - 1].time : 0
+                }));
     }
 
     /**
@@ -88,12 +92,6 @@ export class Store {
             format: STORAGE_FORMAT_VERSION,
         };
 
-        this.#context.game.socket.emit('module.aide', {
-            name: 'conversation.create',
-            data: conversation
-        });
-
-        this.#conversations.set(id, {...conversation, loaded: true});
         return conversation;
     }
 
