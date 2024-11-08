@@ -68,7 +68,10 @@ export class DocumentManager {
      */
     async chunks(id) {
         const doc = await this.getDocument(id);
-        return this.#chunks(doc);
+        if (!this.#indexable(doc)) {
+            return [];
+        }
+        return this.calculateChunks(doc.text.content);
     }
 
     /**
@@ -164,7 +167,7 @@ export class DocumentManager {
             return;
         }
 
-        const chunks = await this.#chunks(changed);
+        const chunks = this.calculateChunks(changed.text.content);
         if (chunks.length === 0) {
             return;
         }
@@ -173,12 +176,7 @@ export class DocumentManager {
         await this.#store.add(vectors);
     }
 
-    #chunks(doc) {
-        if (!doc || !this.#indexable(doc)) {
-            return [];
-        }
-
-        const content = doc.text.content;
+    calculateChunks(content) {
         const tokens = this.#tokenize(content);
         const chunks = [];
 

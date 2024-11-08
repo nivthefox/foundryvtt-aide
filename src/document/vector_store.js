@@ -92,23 +92,31 @@ export class VectorStore {
 
         return Array.from(this.#cache.entries())
             .map(([id, documentVectors]) => {
+                console.log(`Processing document ${id} with ${documentVectors.length} vectors`);
+
                 // For each query vector, calculate similarities with all document chunks
                 const queryScores = queries.map(queryVector => {
                     const similarities = documentVectors.map(docVector => ({
                         similarity: this.#calculateSimilarity(queryVector, docVector)
                     }));
+                    console.log(`Similarities for doc ${id}:`, similarities);
 
                     const maxSim = similarities.reduce((max, curr) =>
                         curr.similarity > max.similarity ? curr : max
                     );
+
                     const avgSim = similarities.reduce((sum, curr) =>
                         sum + curr.similarity, 0) / similarities.length;
 
-                    return (maxSim.similarity * this.maxWeight) + (avgSim * avgWeight);
+                    const score = (maxSim.similarity * this.maxWeight) + (avgSim * avgWeight);
+                    console.log(`Scores for doc ${id}: max=${maxSim.similarity}, avg=${avgSim}, final=${score}`);
+
+                    return score;
                 });
 
                 // Take the maximum score across all query vectors
                 const score = queryScores.reduce((sum, score) => sum + score, 0) / queryScores.length;
+                console.log(`Final score for doc ${id}: ${score}`);
 
                 return { id, score };
             })

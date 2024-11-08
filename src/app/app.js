@@ -26,7 +26,8 @@ export class App {
         ctx.Hooks.once('setup', () => this.setup(ctx, id));
         ctx.Hooks.once('ready', () => this.ready(ctx, id));
         ctx.Hooks.on('renderSidebarTab', (app, html) =>
-            renderChatWithAIButton(app, html, this.conversationStore, this.chatClient));
+            renderChatWithAIButton(app, html, this.conversationStore, this.chatClient, this.embeddingClient,
+                this.vectorStore, this.documentManager));
     }
 
     async ready() {
@@ -41,17 +42,21 @@ export class App {
         this.chatClient = Client.create(providerSettings.chat);
         this.embeddingClient = Client.create(providerSettings.embedding);
         this.conversationStore = new ConversationStore(ctx);
-        this.vectorStore = new VectorStore(ctx);
+
+        const lookups = game.settings.get('aide', 'VectorStoreLookups');
+        const maxWeight = game.settings.get('aide', 'VectorStoreMaxWeight');
+        const queryBoostFactor = game.settings.get('aide', 'VectorStoreQueryBoostFactor');
+        this.vectorStore = new VectorStore(lookups, maxWeight, queryBoostFactor);
 
         // Initialize Document Manager
         const managerSettings = this.settings.getDocumentManagerSettings();
         this.documentManager = new DocumentManager(ctx, managerSettings, this.embeddingClient, this.vectorStore);
 
-        // todo: only rebuild if necessary
-        await this.documentManager.rebuildVectorStore();
-
         // Initialize Conversation Store
         await this.conversationStore.initialize();
+
+        // todo: only rebuild if necessary
+        await this.documentManager.rebuildVectorStore();
 
         // Register model choices
         const chatModels = await this.chatClient.getChatModels();

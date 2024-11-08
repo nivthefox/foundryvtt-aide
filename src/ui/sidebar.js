@@ -1,6 +1,7 @@
 import { Chat } from './chat.js';
 
-export async function renderChatWithAIButton(app, html, conversationStore, chatClient) {
+export async function renderChatWithAIButton(app, html, conversationStore, chatClient,
+    embeddingClient, vectorStore, documentManager) {
     if (!(app instanceof JournalDirectory)) {
         return;
     }
@@ -15,6 +16,7 @@ export async function renderChatWithAIButton(app, html, conversationStore, chatC
 
     const button = targetElement.find('.aide.chat-with-ai');
     button.click(() => {
-        new Chat(conversationStore, chatClient).render(true);
+        new Chat(conversationStore, chatClient, embeddingClient, vectorStore, documentManager)
+            .render(true);
     });
 }

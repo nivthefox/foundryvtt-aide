@@ -7,10 +7,13 @@
                     <button class="settings" data-action="settings">
                         <i class="fas fa-sliders"></i>
                     </button>
+                    <!--
+                    // todo: consider how to handle context
                     <button class="context" data-action="context">
                         <i class="fas fa-paperclip"></i>
                         {{#if context.documents.length}}<span>{{ context.documents.length }}</span>{{/if}}
                     </button>
+                    //-->
             </aside>
         </h2>
         {{#each messages as | message | }}

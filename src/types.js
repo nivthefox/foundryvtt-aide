@@ -16,7 +16,7 @@
 
 /**
  * @typedef {Object} ContextDocument
- * @property {string} uuid
+ * @property {string} id
  * @property {string} [title]
  * @property {string} [content]
  */

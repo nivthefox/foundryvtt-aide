@@ -151,29 +151,33 @@ export class DeepInfra {
     /**
      * @param {string} model
      * @param {string} id
-     * @param {Chunk[]} chunks
+     * @param {Chunk[]} inputs
      * @returns {Promise<EmbeddingDocument>}
      */
-    async embed(model, id, chunks) {
-        const response = await fetch(`${this.#baseUrl}/${model}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.#apiKey}`
-            },
-            body: JSON.stringify({
-                inputs: chunks
-            })
-        });
+    async embed(model, id, inputs) {
+        const data = {
+            id,
+            vectors: []
+        };
 
-        if (!response.ok) {
-            throw new Error(`DeepInfra API error: ${response.status}`);
+        for (const input of inputs) {
+            const response = await fetch(`${this.#baseUrl}/embeddings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.#apiKey}`
+                },
+                body: JSON.stringify({input, model})
+            });
+
+            if (!response.ok) {
+                throw new Error(`DeepInfra API error: ${response.status}`);
+            }
+
+            const output = await response.json();
+            data.vectors.push(output.data[0].embedding);
         }
 
-        const data = await response.json();
-        return {
-            id,
-            vectors: data.embeddings
-        };
+        return data;
     }
 }

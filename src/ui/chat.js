@@ -42,10 +42,13 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
     };
 
     // Public Methods
-    constructor(conversationStore, chatClient, options = {}) {
+    constructor(conversationStore, chatClient, embeddingClient, vectorStore, documentManager, options = {}) {
         super(options);
         this.chatClient = chatClient;
         this.conversationStore = conversationStore;
+        this.documentManager = documentManager;
+        this.embeddingClient = embeddingClient;
+        this.vectorStore = vectorStore;
         this.#initializeMarkdownConverter();
     }
 
@@ -77,6 +80,27 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         this.#setupContentObserver(editorContent, placeholderText, sendButton);
         this.#setupKeyboardShortcuts(proseMirror, sendButton);
         this.#setupRenameEvent(this.element);
+    }
+
+    async #determineContext(content) {
+        let embeddableContent = this.#activeConversation.messages
+            .reduce((acc, message) => `${acc}${message.content}\n\n`, '');
+        embeddableContent += content;
+
+        const model = game.settings.get('aide', 'EmbeddingModel');
+        const chunks = this.documentManager.calculateChunks(embeddableContent);
+        const embeddings = await this.embeddingClient.embed(model, this.#activeConversation.id, chunks);
+
+        const results = this.vectorStore.findSimilar(embeddings.vectors);
+
+        const context = [];
+        for (const result of results) {
+            const document = await fromUuid(result.id);
+            if (document) {
+                context.push(document);
+            }
+        }
+        return context;
     }
 
     #formatMessageContent(content) {
@@ -275,9 +299,12 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         this.#waitingForResponse = true;
         await this.render(false);
 
+        const context = await this.#determineContext(content);
+
+
         // Get AI response
         const model = game.settings.get('aide', 'ChatModel');
-        const response = await this.chatClient.generate(model, [],
+        const response = await this.chatClient.generate(model, context,
             this.#activeConversation.title, conversation.messages, true);
 
         // Initialize AI message
