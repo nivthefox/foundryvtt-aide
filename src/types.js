@@ -57,6 +57,12 @@
  */
 
 /**
+ * @typedef {Object} GenerateStream
+ * @property {Symbol.asyncIterator} [Symbol.asyncIterator]
+ * @property {AbortController.abort} abort
+ */
+
+/**
  * @typedef {Object} JournalEntryPage
  * @property {{
  *     content: string,

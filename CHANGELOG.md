@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased](https://github.com/nivthefox/foundryvtt-aide)
+### Added
+- AIde generation can now be stopped by clicking the input area during generation.
+
 ### Fixed
 - AIde no longer attempts to send a message with every click in the input area.
 

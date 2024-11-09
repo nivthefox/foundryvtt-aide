@@ -93,11 +93,14 @@ export class DeepInfra {
      * @param {ContextDocument[]} context
      * @param {ConversationMessage[]} query
      * @param {boolean} [stream=false]
-     * @returns {Promise<string> | AsyncGenerator<string, string>}
+     * @returns {Promise<string> | GenerateStream}
      */
     async generate(model, context, query, stream = false) {
+        const controller = new AbortController();
+
         const response = await fetch(`${this.#baseUrl}/chat/completions`, {
             method: 'POST',
+            signal: controller.signal,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.#apiKey}`
@@ -117,31 +120,38 @@ export class DeepInfra {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
 
-            return (async function* () {
-                while (true) {
-                    const {done, value} = await reader.read();
-                    if (done) break;
+            return {
+                [Symbol.asyncIterator]: async function* () {
+                    try {
+                        while (true) {
+                            const {done, value} = await reader.read();
+                            if (done) break;
 
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n').filter(line => line.trim());
+                            const chunk = decoder.decode(value);
+                            const lines = chunk.split('\n').filter(line => line.trim());
 
-                    for (const line of lines) {
-                        if (line === 'data: [DONE]') {
-                            continue;
-                        }
+                            for (const line of lines) {
+                                if (line === 'data: [DONE]') {
+                                    continue;
+                                }
 
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.slice(6));
-                                if (data.choices?.[0]?.delta?.content) {
-                                    yield data.choices[0].delta.content;
+                                if (line.startsWith('data: ')) {
+                                    try {
+                                        const data = JSON.parse(line.slice(6));
+                                        if (data.choices?.[0]?.delta?.content) {
+                                            yield data.choices[0].delta.content;
+                                        }
+                                    } catch (e) {
+                                    }
                                 }
                             }
-                            catch (e) {}
                         }
+                    } finally {
+                        reader.releaseLock();
                     }
-                }
-            })();
+                },
+                abort: () => controller.abort()
+            }
         } else {
             const data = await response.json();
             return data.choices[0].message.content;

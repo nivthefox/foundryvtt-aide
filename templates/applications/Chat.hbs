@@ -16,16 +16,16 @@
                     //-->
             </aside>
         </h2>
-        {{#each messages as | message | }}
+        {{#each messages as | message index | }}
             <section class="message {{ message.role }}">
                 <header>
                     {{~ message.user ~}}
                     <time datetime="{{ message.time }}">{{ message.time }}</time>
                 </header>
                 <section class="content">
+                    <nav class="buttons">
                     <!--
                     // todo: wire these buttons up
-                    <nav class="buttons">
                         {{#if isUserMessage}}
                             <button class="edit">
                                 <i class="fa fa-edit"></i>
@@ -34,8 +34,8 @@
                         <button class="copy">
                             <i class="fa fa-copy"></i>
                         </button>
-                    </nav>
                     //-->
+                    </nav>
                     {{{ message.content }}}
                 </section>
             </section>
@@ -44,13 +44,17 @@
         <footer>
             <section class="input">
                 {{#unless waitingForResponse}}
-                <prose-mirror name="query" value="{{query}}">
-                    {{placeholder}}
-                </prose-mirror>
-                <span class="placeholder-text">How can I AIde you?</span>
-                <button class="send" data-action="send">
-                    <i class="fa fa-arrow-turn-down-left"></i>
-                </button>
+                    <prose-mirror name="query" value="{{query}}">
+                        {{placeholder}}
+                    </prose-mirror>
+                    <span class="placeholder-text">How can I AIde you?</span>
+                    <button class="send" data-action="send">
+                        <i class="fa fa-arrow-turn-down-left"></i>
+                    </button>
+                {{else}}
+                    <button class="stop" data-action="stop">
+                        <i class="fa fa-stop"></i>
+                    </button>
                 {{/unless}}
             </section>
         </footer>

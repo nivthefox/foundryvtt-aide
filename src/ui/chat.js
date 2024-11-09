@@ -6,6 +6,7 @@ const {ApplicationV2, HandlebarsApplicationMixin} = foundry.applications.api;
 export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
     // Class Properties
     #activeConversation;
+    #currentGeneration = null;
     #waitingForResponse = false;
 
     static DEFAULT_OPTIONS = {
@@ -21,12 +22,13 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
             resizable: true,
         },
         actions: {
-            delete: Chat.deleteConversation,
+            deleteConversation: Chat.deleteConversation,
             load: Chat.loadConversation,
             new: Chat.newConversation,
             rename: Chat.rename,
             send: Chat.sendMessage,
             settings: Chat.openChatSettings,
+            stop: Chat.stop,
         }
     };
 
@@ -75,6 +77,14 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Private Methods
+    #addUserMessage(conversation, content) {
+        conversation.messages.push({
+            role: 'user',
+            content,
+            time: DateTime.now().toUTC().toMillis(),
+        });
+    }
+
     #bindEditorEvents(editorContent, placeholderText, sendButton, proseMirror) {
         this.#setupFocusEvents(editorContent, placeholderText);
         this.#setupContentObserver(editorContent, placeholderText, sendButton);
@@ -114,6 +124,52 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         return this.converter.makeMarkdown(cleaned);
     }
 
+
+    async #generateAIResponse(conversation, model, context) {
+        this.#currentGeneration = await this.chatClient
+            .generate(model, context, conversation.title, conversation.messages, true);
+
+        conversation.messages.push({
+            user: 'AIde',
+            role: 'assistant',
+            content: '',
+            time: DateTime.now().toUTC().toMillis(),
+        });
+        await this.render(false);
+    }
+
+    async #generateConversationTitle(conversation, model) {
+        try {
+            const response = await this.chatClient.generate(model, [],
+                conversation.title, [
+                    ...conversation.messages,
+                    {
+                        role: 'user',
+                        content: 'Provide a name for this conversation of 50 characters or less. Put the name in an HTML <title> element.',
+                        time: DateTime.now().toUTC().toMillis()
+                    }
+                ], false);
+
+            const match = response.match(/<title>(.*?)<\/title>/);
+            conversation.title = match ? match[1] : 'New Conversation';
+        } catch (error) {
+            ui.notifications.error('An error occurred while naming the conversation.');
+            console.error(error);
+        }
+    }
+
+    #getEditorContent() {
+        const proseMirror = this.element.querySelector('prose-mirror');
+        const editorContent = this.element.querySelector('.editor-content');
+        if (!proseMirror || !editorContent || !editorContent.innerText.trim().length) return null;
+
+        const content = this.#formatMessageContent(editorContent.innerHTML);
+        if (content) {
+            editorContent.innerHTML = ''; // Clear input if we have valid content
+        }
+        return content;
+    }
+
     #getEditorElements(html) {
         return {
             editorContent: html.querySelector('.editor-content'),
@@ -122,6 +178,21 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
             proseMirror: html.querySelector('prose-mirror')
         };
     }
+
+    #handleGenerationError(conversation, error) {
+        const idx = conversation.messages.length - 1;
+        const contentElement = this.element.querySelector('.message:last-of-type .content');
+
+        if (error.name === 'AbortError') {
+            conversation.messages[idx].content += '\n\n_Generation stopped._';
+            conversation.messages[idx].time = DateTime.now().toUTC().toMillis();
+            contentElement.innerHTML = this.converter.makeHtml(conversation.messages[idx].content);
+        } else {
+            ui.notifications.error('An error occurred while generating the response.');
+            console.error(error);
+        }
+    }
+
 
     #initializeMarkdownConverter() {
         Object.entries(CONST.SHOWDOWN_OPTIONS).forEach(([k, v]) => showdown.setOption(k, v));
@@ -231,6 +302,19 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         });
     }
 
+    async #streamAIResponse(conversation) {
+        const conversationElement = this.element.querySelector('.conversation');
+        const contentElement = conversationElement.querySelector('.message:last-of-type .content');
+        const idx = conversation.messages.length - 1;
+
+        for await (const message of this.#currentGeneration) {
+            conversation.messages[idx].content += message;
+            conversation.messages[idx].time = DateTime.now().toUTC().toMillis();
+            contentElement.innerHTML = this.converter.makeHtml(conversation.messages[idx].content);
+            conversationElement.scrollTop = conversationElement.scrollHeight;
+        }
+    }
+
     #validateEditorElements({editorContent, placeholderText, sendButton, proseMirror}) {
         return editorContent && placeholderText && sendButton && proseMirror;
     }
@@ -274,73 +358,46 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         await this.render(false);
     }
 
+    static async stop(event, target) {
+        if (this.#currentGeneration) {
+            this.#currentGeneration.abort();
+            this.#currentGeneration = null;
+            this.#waitingForResponse = false;
+            await this.render(false);
+        }
+    }
+
     static openChatSettings(event, target) {
         new ChatSettings().render(true);
     }
 
     static async sendMessage(event, target) {
-        const proseMirror = this.element.querySelector('prose-mirror');
-        const editorContent = this.element.querySelector('.editor-content');
-        if (!proseMirror || !editorContent || !editorContent.innerText.trim().length) return;
-        const content = this.#formatMessageContent(editorContent.innerHTML);
+        const content = this.#getEditorContent();
         if (!content) return;
 
         const conversation = this.#activeConversation;
 
         // Add user message
-        conversation.messages.push({
-            role: 'user',
-            content,
-            time: DateTime.now().toUTC().toMillis(),
-        });
-
-        // Clear input and update UI
-        editorContent.innerHTML = '';
+        this.#addUserMessage(conversation, content);
         this.#waitingForResponse = true;
         await this.render(false);
 
-        const context = await this.#determineContext(content);
-
-
         // Get AI response
         const model = game.settings.get('aide', 'ChatModel');
-        const response = await this.chatClient.generate(model, context,
-            this.#activeConversation.title, conversation.messages, true);
+        const context = await this.#determineContext(content);
 
-        // Initialize AI message
-        conversation.messages.push({
-            user: 'AIde',
-            role: 'assistant',
-            content: '',
-            time: DateTime.now().toUTC().toMillis(),
-        });
-        await this.render(false);
-
-        // Stream AI response
-        const conversationElement = this.element.querySelector('.conversation');
-        const contentElement = conversationElement.querySelector('.message:last-of-type .content');
-        const idx = conversation.messages.length - 1;
-
-        for await (const message of response) {
-            conversation.messages[idx].content += message;
-            conversation.messages[idx].time = DateTime.now().toUTC().toMillis();
-            contentElement.innerHTML = this.converter.makeHtml(conversation.messages[idx].content);
-            conversationElement.scrollTop = conversationElement.scrollHeight;
+        try {
+            await this.#generateAIResponse(conversation, model, context);
+            await this.#streamAIResponse(conversation);
+        } catch (error) {
+            this.#handleGenerationError(conversation, error);
+        } finally {
+            this.#currentGeneration = null;
         }
 
-        // Name the conversation if it's unnamed
+        // Name conversation if needed
         if (conversation.title === 'New Conversation') {
-            const response = await this.chatClient.generate(model, [],
-                conversation.title, [
-                    ...conversation.messages,
-                    {
-                        role: 'user',
-                        content: 'Provide a name for this conversation of 50 characters or less. Put the name in an HTML <title> element.',
-                        time: DateTime.now().toUTC().toMillis()
-                    }
-                ], false);
-
-            conversation.title = response.match(/<title>(.*?)<\/title>/)[1];
+            await this.#generateConversationTitle(conversation, model);
         }
 
         // Finalize
