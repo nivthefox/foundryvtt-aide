@@ -42,13 +42,13 @@
         {{/each}}
 
         <footer>
-            <section class="input" data-action="send">
+            <section class="input">
                 {{#unless waitingForResponse}}
                 <prose-mirror name="query" value="{{query}}">
                     {{placeholder}}
                 </prose-mirror>
                 <span class="placeholder-text">How can I AIde you?</span>
-                <button class="send">
+                <button class="send" data-action="send">
                     <i class="fa fa-arrow-turn-down-left"></i>
                 </button>
                 {{/unless}}
