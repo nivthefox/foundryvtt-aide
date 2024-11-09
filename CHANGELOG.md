@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/nivthefox/foundryvtt-aide)
 ### Added
 - AIde generation can now be stopped by clicking the input area during generation.
+- Added a means to delete messages within a conversation.
 
 ### Fixed
 - AIde no longer attempts to send a message with every click in the input area.

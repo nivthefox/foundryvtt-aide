@@ -23,6 +23,7 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         },
         actions: {
             deleteConversation: Chat.deleteConversation,
+            deleteMessage: Chat.deleteMessage,
             load: Chat.loadConversation,
             new: Chat.newConversation,
             rename: Chat.rename,
@@ -333,6 +334,25 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         const userId = target.parentElement.getAttribute('data-user-id');
         const id = target.parentElement.getAttribute('data-id');
         await this.conversationStore.delete(userId, id);
+        await this.render(false);
+    }
+
+    static async deleteMessage(event, target) {
+        const messageId = parseInt(target.getAttribute('data-message-id'), 10);
+        const messages = this.#activeConversation.messages.slice(0, messageId);
+        const diff = this.#activeConversation.messages.length - messages.length;
+
+        const confirmation = await Dialog.confirm({
+            title: 'Delete Message',
+            content: `Are you sure you want to delete ${diff} messages?`,
+        });
+
+        if (!confirmation) {
+            return;
+        }
+
+        this.#activeConversation.messages = messages;
+        await this.conversationStore.update(this.#activeConversation);
         await this.render(false);
     }
 
