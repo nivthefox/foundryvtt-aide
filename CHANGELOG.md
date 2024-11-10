@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - AIde no longer attempts to send a message with every click in the input area.
+- Improved the system prompt for a more conversational AI.
 
 ## [1.0.0](https://github.com/nivthefox/foundryvtt-aide/releases/tag/1.0.0) - 2024-11-08
 ### Added
