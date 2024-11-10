@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased](https://github.com/nivthefox/foundryvtt-aide)
+
+## [1.1.0](https://github.com/nivthefox/foundryvtt-aide/releases/tag/1.1.0) - 2024-11-09
 ### Added
 - AIde generation can now be stopped by clicking the input area during generation.
 - Added a means to delete messages within a conversation.
