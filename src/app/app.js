@@ -39,8 +39,26 @@ export class App {
 
         // Initialize Clients and Stores
         const providerSettings = this.settings.getProviderSettings();
+        if (providerSettings.chat.provider === 'default' || providerSettings.embedding.provider === 'default'
+            || providerSettings.chat.provider === '' || providerSettings.embedding.provider === '') {
+            this.logger.error('Chat and Embedding providers must be set in the settings');
+            return;
+        }
+
         this.chatClient = Client.create(providerSettings.chat);
         this.embeddingClient = Client.create(providerSettings.embedding);
+
+        // Register model choices
+        const chatModels = await this.chatClient.getChatModels();
+        this.settings.setChoices('ChatModel', chatModels);
+
+        const embeddingModels = await this.embeddingClient.getEmbeddingModels();
+        this.settings.setChoices('EmbeddingModel', embeddingModels);
+
+        if (!providerSettings.chat.model || !providerSettings.embedding.model) {
+            this.logger.error('Chat and Embedding models must be set in the settings');
+            return
+        }
         this.conversationStore = new ConversationStore(ctx);
 
         const lookups = game.settings.get('aide', 'VectorStoreLookups');
@@ -57,12 +75,5 @@ export class App {
 
         // todo: only rebuild if necessary
         await this.documentManager.rebuildVectorStore();
-
-        // Register model choices
-        const chatModels = await this.chatClient.getChatModels();
-        this.settings.setChoices('ChatModel', chatModels);
-
-        const embeddingModels = await this.embeddingClient.getEmbeddingModels();
-        this.settings.setChoices('EmbeddingModel', embeddingModels);
     }
 }

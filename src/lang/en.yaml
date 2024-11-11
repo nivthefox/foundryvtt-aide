@@ -7,7 +7,7 @@ aide:
       hint: The API key for the chat service you want to use.
     ChatBaseURL:
       name: Chat Base URL
-      hint: The base URL for the chat service you want to use.
+      hint: The base URL for the chat service you want to use, if different from the default.
     ChatModel:
       name: Chat Model
       hint: The model to use for your chat generation requests.
@@ -25,7 +25,7 @@ aide:
       hint: The API key for the embedding service you want to use.
     EmbeddingBaseURL:
       name: Embedding Base URL
-      hint: The base URL for the embedding service you want to use.
+      hint: The base URL for the embedding service you want to use, if different from the default.
     EmbeddingModel:
       name: Embedding Model
       hint: The model to use for your embedding requests.

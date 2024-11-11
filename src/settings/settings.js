@@ -32,30 +32,43 @@ export class Settings {
     }
 
     getProviderSettings() {
-        return {
+        const settings = {
             chat: {
                 provider: this.#context.game.settings.get(this.#module, 'ChatProvider'),
                 apiKey: this.#context.game.settings.get(this.#module, 'ChatAPIKey'),
                 baseURL: this.#context.game.settings.get(this.#module, 'ChatBaseURL'),
-                model: this.#context.game.settings.get(this.#module, 'ChatModel'),
             },
             embedding: {
                 provider: this.#context.game.settings.get(this.#module, 'EmbeddingProvider'),
                 apiKey: this.#context.game.settings.get(this.#module, 'EmbeddingAPIKey'),
                 baseURL: this.#context.game.settings.get(this.#module, 'EmbeddingBaseURL'),
-                model: this.#context.game.settings.get(this.#module, 'EmbeddingModel'),
             }
         };
+
+        try {
+            settings.chat.model = this.#context.game.settings.get(this.#module, 'ChatModel');
+            settings.embedding.model = this.#context.game.settings.get(this.#module, 'EmbeddingModel');
+        } catch (e) {
+            // ignore
+        }
+
+        return settings;
     }
 
     registerSettings() {
-        Object.entries(SETTINGS_REGISTRY).forEach(([key, config]) => {
-            this.#registerSetting(key, config);
-        });
+        Object.entries(SETTINGS_REGISTRY)
+            .forEach(([key, config]) => {
+                if ((key === 'ChatModel'
+                        && (this.ChatProvider === 'default' || this.ChatProvider === ''))
+                    || (key === 'EmbeddingModel'
+                        && (this.EmbeddingProvider === 'default' || this.EmbeddingProvider === ''))) {
+                    return;
+                }
 
-        Object.entries(SETTINGS_REGISTRY).forEach(([key, config]) => {
-            this[key] = this.#context.game.settings.get(this.#module, key);
-        });
+                this.#registerSetting(key, config);
+                this[key] = this.#context.game.settings.get(this.#module, key);
+
+            });
     }
 
     setChoices(key, values) {

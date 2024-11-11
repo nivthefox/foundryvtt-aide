@@ -1,4 +1,14 @@
 {
+  "ChatProvider": {
+    "type": "String",
+    "default": "",
+    "scope": "client",
+    "choices": {
+      "default": "",
+      "openai": "OpenAI",
+      "deepinfra": "DeepInfra"
+    }
+  },
   "ChatAPIKey": {
     "type": "String",
     "default": "",
@@ -14,14 +24,30 @@
     "default": "",
     "scope": "client"
   },
-  "ChatProvider": {
+  "EmbeddingProvider": {
     "type": "String",
     "default": "",
     "scope": "client",
     "choices": {
+      "default": "",
       "openai": "OpenAI",
       "deepinfra": "DeepInfra"
     }
+  },
+  "EmbeddingAPIKey": {
+    "type": "String",
+    "default": "",
+    "scope": "client"
+  },
+  "EmbeddingBaseURL": {
+    "type": "String",
+    "default": "",
+    "scope": "client"
+  },
+  "EmbeddingModel": {
+    "type": "StringField",
+    "default": "",
+    "scope": "client"
   },
   "ChunkSize": {
     "type": "Number",
@@ -41,30 +67,6 @@
       "min": 0,
       "max": 256,
       "step": 16
-    }
-  },
-  "EmbeddingAPIKey": {
-    "type": "String",
-    "default": "",
-    "scope": "client"
-  },
-  "EmbeddingBaseURL": {
-    "type": "String",
-    "default": "",
-    "scope": "client"
-  },
-  "EmbeddingModel": {
-    "type": "StringField",
-    "default": "",
-    "scope": "client"
-  },
-  "EmbeddingProvider": {
-    "type": "String",
-    "default": "",
-    "scope": "client",
-    "choices": {
-      "openai": "OpenAI",
-      "deepinfra": "DeepInfra"
     }
   },
   "VectorStoreLookups": {
