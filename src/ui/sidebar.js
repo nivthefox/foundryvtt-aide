@@ -11,6 +11,12 @@ export async function renderChatWithAIButton(app, html, conversationStore, chatC
         return;
     }
 
+    if (conversationStore === undefined || chatClient === undefined || embeddingClient === undefined
+        || vectorStore === undefined || documentManager === undefined) {
+        debugger;
+        return;
+    }
+
     const template = await renderTemplate('modules/aide/templates/sidebar/ChatWithAI.hbs');
     targetElement.append(template);
 

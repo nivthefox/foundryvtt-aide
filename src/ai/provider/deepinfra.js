@@ -108,6 +108,11 @@ export class DeepInfra {
             body: JSON.stringify({
                 model: model,
                 messages: query,
+                temperature: 0.7,
+                top_p: 0.9,
+                top_k: 0,
+                presence_penalty: 0.0,
+                frequency_penalty: 0.0,
                 stream
             })
         });

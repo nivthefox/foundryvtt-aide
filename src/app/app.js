@@ -25,12 +25,10 @@ export class App {
 
         ctx.Hooks.once('setup', () => this.setup(ctx, id));
         ctx.Hooks.once('ready', () => this.ready(ctx, id));
-        ctx.Hooks.on('renderSidebarTab', (app, html) =>
-            renderChatWithAIButton(app, html, this.conversationStore, this.chatClient, this.embeddingClient,
-                this.vectorStore, this.documentManager));
+        ctx.Hooks.on('renderSidebarTab', async (app, html) => await this.renderSidebarButton(app, html));
     }
 
-    async ready() {
+    async ready(ctx, id) {
         this.logger.debug('Version %s Ready', this.version);
     }
 
@@ -47,18 +45,6 @@ export class App {
 
         this.chatClient = Client.create(providerSettings.chat);
         this.embeddingClient = Client.create(providerSettings.embedding);
-
-        // Register model choices
-        const chatModels = await this.chatClient.getChatModels();
-        this.settings.setChoices('ChatModel', chatModels);
-
-        const embeddingModels = await this.embeddingClient.getEmbeddingModels();
-        this.settings.setChoices('EmbeddingModel', embeddingModels);
-
-        if (!providerSettings.chat.model || !providerSettings.embedding.model) {
-            this.logger.error('Chat and Embedding models must be set in the settings');
-            return
-        }
         this.conversationStore = new ConversationStore(ctx);
 
         const lookups = game.settings.get('aide', 'VectorStoreLookups');
@@ -70,10 +56,22 @@ export class App {
         const managerSettings = this.settings.getDocumentManagerSettings();
         this.documentManager = new DocumentManager(ctx, managerSettings, this.embeddingClient, this.vectorStore);
 
+        // Register model choices
+        const chatModels = await this.chatClient.getChatModels();
+        this.settings.setChoices('ChatModel', chatModels);
+
+        const embeddingModels = await this.embeddingClient.getEmbeddingModels();
+        this.settings.setChoices('EmbeddingModel', embeddingModels);
+
         // Initialize Conversation Store
         await this.conversationStore.initialize();
 
         // todo: only rebuild if necessary
         await this.documentManager.rebuildVectorStore();
+    }
+
+    async renderSidebarButton(app, html) {
+        await renderChatWithAIButton(app, html, this.conversationStore, this.chatClient,
+            this.embeddingClient, this.vectorStore, this.documentManager);
     }
 }
