@@ -334,6 +334,11 @@ export class Chat extends HandlebarsApplicationMixin(ApplicationV2) {
         const userId = target.parentElement.getAttribute('data-user-id');
         const id = target.parentElement.getAttribute('data-id');
         await this.conversationStore.delete(userId, id);
+
+        if (this.#activeConversation && this.#activeConversation.id === id) {
+            this.#activeConversation = null;
+        }
+
         await this.render(false);
     }
 

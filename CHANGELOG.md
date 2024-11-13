@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Resolved an issue where models could be set prematurely. (#1)
 - Improved the prompt for text generation.
+- Close the active conversation when it is deleted.
 
 ## [1.1.0](https://github.com/nivthefox/foundryvtt-aide/releases/tag/1.1.0) - 2024-11-09
 ### Added
