@@ -13,7 +13,6 @@ export async function renderChatWithAIButton(app, html, conversationStore, chatC
 
     if (conversationStore === undefined || chatClient === undefined || embeddingClient === undefined
         || vectorStore === undefined || documentManager === undefined) {
-        debugger;
         return;
     }
 

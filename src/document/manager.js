@@ -45,17 +45,22 @@ export class DocumentManager {
      */
     #context;
 
+    #emitter;
+
     /**
      * @param {object} context - typically `window`, but may be a test context
      * @param {ManagerConfiguration} options
      * @param {AIProvider} client
      * @param {VectorStore} store
      */
-    constructor(context, options, client, store) {
+    constructor(context, options, client, store, emitter) {
         this.#context = context;
         this.#options = { ...this.#options, ...options };
         this.#client = client;
         this.#store = store;
+        this.#emitter = emitter;
+
+        this.#emitter.on('document.update', (doc, changed) => this.updateDocumentVectors(doc, changed));
     }
 
     /**

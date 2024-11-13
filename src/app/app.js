@@ -1,5 +1,6 @@
 import {Logger, LogLevels} from './logger';
 import {DocumentManager} from '../document/manager';
+import {Emitter} from '../event/emitter';
 import {Settings} from '../settings/settings';
 import {Store as ConversationStore} from '../conversation/store';
 import {VectorStore} from '../document/vector_store';
@@ -46,7 +47,9 @@ export class App {
 
         this.chatClient = Client.create(providerSettings.chat);
         this.embeddingClient = Client.create(providerSettings.embedding);
-        this.conversationStore = new ConversationStore(ctx);
+        this.eventEmitter = new Emitter(ctx, this.logger);
+
+        this.conversationStore = new ConversationStore(ctx, this.eventEmitter);
 
         const lookups = game.settings.get('aide', 'VectorStoreLookups');
         const maxWeight = game.settings.get('aide', 'VectorStoreMaxWeight');
@@ -55,7 +58,8 @@ export class App {
 
         // Initialize Document Manager
         const managerSettings = this.settings.getDocumentManagerSettings();
-        this.documentManager = new DocumentManager(ctx, managerSettings, this.embeddingClient, this.vectorStore);
+        this.documentManager = new DocumentManager(ctx, managerSettings, this.embeddingClient,
+            this.vectorStore, this.eventEmitter);
 
         // Register model choices
         const chatModels = await this.chatClient.getChatModels();
@@ -78,7 +82,8 @@ export class App {
             this.embeddingClient, this.vectorStore, this.documentManager);
     }
 
-    updateJournalEntryPage(previous, modified) {
-        this.documentManager.updateDocumentVectors(previous, modified);
+    async updateJournalEntryPage(previous, modified) {
+        await this.documentManager.updateDocumentVectors(previous, modified);
+        this.eventEmitter.emit('document.update', previous, modified);
     }
 }

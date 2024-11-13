@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased](https://github.com/nivthefox/foundryvtt-aide)
+### Added
+- Document embeddings will be updated when another user updates a document.
+
 ### Fixed
 - Resolved an issue where models could be set prematurely. (#1)
 - Improved the prompt for text generation.

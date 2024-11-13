@@ -33,11 +33,16 @@ export class Store {
      */
     #conversations = new Map();
 
+    #emitter;
+
     /**
      * @param context
+     * @param {Emitter} emitter
      */
-    constructor(context) {
+    constructor(context, emitter) {
         this.#context = context;
+        this.#emitter = emitter;
+
     }
 
     /**
@@ -56,9 +61,15 @@ export class Store {
         await this.#createDirectoryIfMissing();
         await this.#fetchConversations();
 
-        // todo: Extract inter-client communication to a separate class
-        this.#context.game.socket.on('module.aide', async event =>
-            await this.#onSocketMessage(event.name, event.data));
+        this.#emitter.on('conversation.create', (id) =>
+            this.#conversations.set(id, {id, loaded: false}));
+        this.#emitter.on('conversation.delete', (id) =>
+            this.#conversations.delete(id));
+        this.#emitter.on('conversation.update', (id) => {
+            const {userId} = this.#conversations.get(id);
+            this.#conversations.set(id, {id, loaded: false});
+            this.get(userId, id);
+        });
     }
 
     /**
@@ -113,12 +124,8 @@ export class Store {
             throw new Error('Failed to delete conversation');
         }
 
-        this.#context.game.socket.emit('module.aide', {
-            name: 'conversation.delete',
-            data: {id: conversationId}
-        });
-
         this.#conversations.delete(conversationId);
+        this.#emitter.emit('conversation.delete', conversationId);
     }
 
     /**
@@ -171,36 +178,8 @@ export class Store {
         const {userId, id} = conversation;
         await this.#uploadConversation(userId, conversation);
 
-        this.#context.game.socket.emit('module.aide', {
-            name: 'conversation.update',
-            data: conversation
-        });
-
         this.#conversations.set(id, {...conversation, loaded: true});
-    }
-
-    /**
-     * #onSocketMessage handles incoming socket messages
-     *
-     * @private
-     * @param {string} event
-     * @param {Conversation} data
-     * @returns {Promise<void>}
-     */
-    async #onSocketMessage(event, data) {
-        switch (event) {
-            case 'conversation.create':
-                this.#conversations.set(data.id, {...data, loaded: false});
-                break;
-            case 'conversation.delete':
-                this.#conversations.delete(data.id);
-                break;
-            case 'conversation.update':
-                this.#conversations.set(data.id, {...data, loaded: false});
-                break;
-            default:
-                console.warn(`Unknown socket message: ${event}`);
-        }
+        this.#emitter.emit('conversation.update', id);
     }
 
     /**
