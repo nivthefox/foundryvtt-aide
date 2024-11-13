@@ -24,6 +24,65 @@
     "default": "",
     "scope": "client"
   },
+  "ChatTemperature": {
+    "type": "Number",
+    "default": 0.7,
+    "scope": "client",
+    "range": {
+      "min": 0,
+      "max": 2,
+      "step": 0.05
+    }
+  },
+  "ChatTopP": {
+    "type": "Number",
+    "default": 0.9,
+    "scope": "client",
+    "range": {
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    }
+  },
+  "ChatTopK": {
+    "type": "Number",
+    "default": 0,
+    "scope": "client",
+    "range": {
+      "min": 0,
+      "max": 32,
+      "step": 1
+    }
+  },
+  "ChatPresencePenalty": {
+    "type": "Number",
+    "default": 0,
+    "scope": "client",
+    "range": {
+      "min": 0,
+      "max": 2,
+      "step": 0.05
+    }
+  },
+  "ChatFrequencyPenalty": {
+    "type": "Number",
+    "default": 0,
+    "scope": "client",
+    "range": {
+    "min": 0,
+    "max": 2,
+    "step": 0.05
+    }
+  },
+    "ChatMaxTokens": {
+      "type": "Number",
+      "default": 150,
+      "scope": "client",
+      "range": {
+      "min": 1,
+      "step": 1
+      }
+    },
   "EmbeddingProvider": {
     "type": "String",
     "default": "",

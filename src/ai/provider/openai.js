@@ -12,11 +12,19 @@ export class OpenAI {
      * @param {AIProviderSettings} config
      */
     constructor(config) {
-        this.#apiKey = config.apiKey;
+        delete config.provider;
+
+        if (config.apiKey) {
+            this.#apiKey = config.apiKey;
+            delete config.apiKey;
+        }
 
         if (config.baseURL) {
             this.#baseUrl = config.baseURL;
+            delete config.baseURL;
         }
+
+        this.config = config;
     }
 
     /**
@@ -88,11 +96,7 @@ export class OpenAI {
             body: JSON.stringify({
                 model,
                 messages: query,
-                temperature: 0.7,
-                top_p: 0.9,
-                top_k: 0,
-                presence_penalty: 0.0,
-                frequency_penalty: 0.0,
+                ...this.config,
                 stream
             })
         });

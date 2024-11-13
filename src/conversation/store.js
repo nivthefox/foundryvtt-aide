@@ -61,11 +61,9 @@ export class Store {
         await this.#createDirectoryIfMissing();
         await this.#fetchConversations();
 
-        this.#emitter.on('conversation.create', (id) =>
-            this.#conversations.set(id, {id, loaded: false}));
-        this.#emitter.on('conversation.delete', (id) =>
-            this.#conversations.delete(id));
-        this.#emitter.on('conversation.update', (id) => {
+        this.#emitter.on('conversation.create', id => this.#conversations.set(id, {id, loaded: false}));
+        this.#emitter.on('conversation.delete', id => this.#conversations.delete(id));
+        this.#emitter.on('conversation.update', id => {
             const {userId} = this.#conversations.get(id);
             this.#conversations.set(id, {id, loaded: false});
             this.get(userId, id);

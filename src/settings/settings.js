@@ -37,6 +37,12 @@ export class Settings {
                 provider: this.#context.game.settings.get(this.#module, 'ChatProvider'),
                 apiKey: this.#context.game.settings.get(this.#module, 'ChatAPIKey'),
                 baseURL: this.#context.game.settings.get(this.#module, 'ChatBaseURL'),
+                temperature: this.#context.game.settings.get(this.#module, 'ChatTemperature'),
+                maxTokens: this.#context.game.settings.get(this.#module, 'ChatMaxTokens'),
+                topP: this.#context.game.settings.get(this.#module, 'ChatTopP'),
+                topK: this.#context.game.settings.get(this.#module, 'ChatTopK'),
+                frequencyPenalty: this.#context.game.settings.get(this.#module, 'ChatFrequencyPenalty'),
+                presencePenalty: this.#context.game.settings.get(this.#module, 'ChatPresencePenalty'),
             },
             embedding: {
                 provider: this.#context.game.settings.get(this.#module, 'EmbeddingProvider'),

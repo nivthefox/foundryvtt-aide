@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased](https://github.com/nivthefox/foundryvtt-aide)
 ### Added
 - Document embeddings will be updated when another user updates a document.
+- New settings are now available to control the LLM's creativity and consistency. 
 
 ### Fixed
 - Resolved an issue where models could be set prematurely. (#1)

@@ -21,6 +21,6 @@ export class Emitter {
                 this.#logger.debug('Received event %s', event.name);
                 listener(...event.args);
             }
-        })
+        });
     }
 }

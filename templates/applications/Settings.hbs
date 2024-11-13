@@ -1,9 +1,34 @@
+<!-- todo: i18n -->
 <section class="settings">
     <label>
         <span>Chat Model</span>
         <select class="chat-model">
             {{selectOptions chatModels selected=chatModel}}
         </select>
+    </label>
+    <label>
+        <span>Temperature</span>
+        <input type="number" class="temperature" step="0.05" value={{temperature}}>
+    </label>
+    <label>
+        <span>Max Tokens</span>
+        <input type="number" class="max-tokens" step="1" value={{maxTokens}}>
+    </label>
+    <label>
+        <span>Top P</span>
+        <input type="number" class="top-p" step="0.05" value={{topP}}>
+    </label>
+    <label>
+        <span>Top K</span>
+        <input type="number" class="top-k" step="1" value={{topK}}>
+    </label>
+    <label>
+        <span>Frequency Penalty</span>
+        <input type="number" class="frequency-penalty" step="0.05" value={{frequencyPenalty}}>
+    </label>
+    <label>
+        <span>Presence Penalty</span>
+        <input type="number" class="presence-penalty" step="0.05" value={{presencePenalty}}>
     </label>
     <label>
         <span>Embedding Model</span>
