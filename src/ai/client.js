@@ -121,7 +121,7 @@ export class Client {
             case 'anthropic':
                 throw new Error('Unsupported provider: Anthropic');
                 // disabled temporarily as Anthropic does not support embeddings
-                // todo: re-enable when Anthropic supports embeddings or when we
+                // fixme: re-enable when Anthropic supports embeddings or when we
                 //       have the ability to separate the chat and embedding
                 //       providers
                 // return new Anthropic(configuration);

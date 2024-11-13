@@ -45,7 +45,7 @@ export class DeepInfra {
      * @returns {Promise<string[]>}
      */
     async getEmbeddingModels() {
-        // todo: temporarily hardcoded since there's no way to get the embedding
+        // fixme: temporarily hardcoded since there's no way to get the embedding
         //       models from the API
         return [
             'BAAI/bge-base-en-v1.5',

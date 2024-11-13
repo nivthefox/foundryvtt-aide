@@ -43,7 +43,7 @@ export default function DeepInfraProviderTest({describe, it, assert, beforeEach,
             assert.equal(fetchCount, 1, 'Should only fetch once');
         });
 
-        // todo: disabled since there's no way to get the embedding models from the API
+        // fixme: disabled since there's no way to get the embedding models from the API
         //       they are temporarily hardcoded in the provider
         // it('caches embedding models', async () => {
         //     const models1 = await provider.getEmbeddingModels();

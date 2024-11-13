@@ -5,6 +5,12 @@
 export const STORAGE_KEY = 'foundryvtt.aide.vectors';
 
 /**
+ * STORAGE_TIME_KEY is a unique identifier for the last updated time in local storage
+ * @type {string}
+ */
+export const STORAGE_TIME_KEY = 'foundryvtt.aide.last_updated';
+
+/**
  * STORAGE_FORMAT_VERSION is a version number for the storage format
  * This is used to determine if the stored data needs to be migrated
  * @type {number}
@@ -79,6 +85,14 @@ export class VectorStore {
     clear() {
         this.#cache.clear();
         queueMicrotask(() => this.#saveToStorage());
+    }
+
+    /**
+     * getLastUpdated returns the last time the store was updated
+     */
+    getLastUpdated() {
+        const dateString = localStorage.getItem(STORAGE_TIME_KEY);
+        return dateString ? new Date(parseInt(dateString)) : null;
     }
 
     /**
@@ -218,6 +232,7 @@ export class VectorStore {
 
         const serialized = JSON.stringify(data);
         localStorage.setItem(STORAGE_KEY, serialized);
+        localStorage.setItem(STORAGE_TIME_KEY, Date.now().toString());
     }
 
     /**

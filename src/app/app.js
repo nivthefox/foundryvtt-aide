@@ -26,6 +26,7 @@ export class App {
         ctx.Hooks.once('setup', () => this.setup(ctx, id));
         ctx.Hooks.once('ready', () => this.ready(ctx, id));
         ctx.Hooks.on('renderSidebarTab', async (app, html) => await this.renderSidebarButton(app, html));
+        ctx.Hooks.on('preUpdateJournalEntryPage', (previous, modified) => this.updateJournalEntryPage(previous, modified));
     }
 
     async ready(ctx, id) {
@@ -66,12 +67,18 @@ export class App {
         // Initialize Conversation Store
         await this.conversationStore.initialize();
 
-        // todo: only rebuild if necessary
-        await this.documentManager.rebuildVectorStore();
+        // only rebuild if necessary
+        if (this.vectorStore.getLastUpdated() === null) {
+            await this.documentManager.rebuildVectorStore();
+        }
     }
 
     async renderSidebarButton(app, html) {
         await renderChatWithAIButton(app, html, this.conversationStore, this.chatClient,
             this.embeddingClient, this.vectorStore, this.documentManager);
+    }
+
+    updateJournalEntryPage(previous, modified) {
+        this.documentManager.updateDocumentVectors(previous, modified);
     }
 }

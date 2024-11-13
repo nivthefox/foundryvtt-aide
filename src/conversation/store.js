@@ -56,6 +56,7 @@ export class Store {
         await this.#createDirectoryIfMissing();
         await this.#fetchConversations();
 
+        // todo: Extract inter-client communication to a separate class
         this.#context.game.socket.on('module.aide', async event =>
             await this.#onSocketMessage(event.name, event.data));
     }
